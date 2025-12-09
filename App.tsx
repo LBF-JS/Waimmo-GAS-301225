@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 
 // Import types
@@ -5,14 +6,15 @@ import {
     Contact, Appointment, VisitReport, SavedAnnonce, Notification, AgentInfo, NotificationSettings, 
     Civility, FunnelStage, ProjectStatus, ContactType, ContactPreference, PropertyType, TransactionType, 
     ProjectPriority, FinancingStatus, ContactSource, Remark, NotificationType,
-    AppointmentStatus, VisitReportStatus, Estimation, Mandate
+    AppointmentStatus, VisitReportStatus, Estimation, Mandate,
+    Criterion, Columns, PigeResult
 } from './types';
 
 // Import Pages
 import { HomePage } from './pages/HomePage';
 import { Dashboard } from './pages/Dashboard';
 import { Search } from './pages/Search';
-import { PigePage } from './pages/PigePage';
+import { PigePage, INITIAL_CRITERIA } from './pages/PigePage';
 import { CalendarPage } from './pages/CalendarPage';
 import { ReportPage } from './pages/ReportPage';
 import { ImageEditorPage } from './pages/ImageEditorPage';
@@ -117,6 +119,22 @@ const App = () => {
     const [agentInfo, setAgentInfo] = useState<AgentInfo>(initialAgentInfo);
     const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(initialNotificationSettings);
     const [n8nWebhookUrl, setN8nWebhookUrl] = useState<string>('');
+    
+    // Pige Page State
+    const [pigeState, setPigeState] = useState({
+        searchType: 'listings' as 'listings' | 'agencies',
+        location: 'Toulouse, France',
+        radius: 5,
+        availableCriteria: INITIAL_CRITERIA,
+        columns: { essentials: [] as Criterion[], importants: [] as Criterion[], secondaries: [] as Criterion[] } as Columns,
+        freeTextInput: '',
+        isLoading: false,
+        error: null as string | null,
+        results: [] as PigeResult[],
+        coordinates: null as { latitude: number; longitude: number; } | null,
+        selectedContactId: '',
+        selectedResultIds: [] as string[],
+    });
 
     useEffect(() => {
         // Hydrate state from mock data on initial load
@@ -348,7 +366,7 @@ const App = () => {
             case 'home': return <HomePage contacts={contacts} appointments={appointments} onSelectContact={handleSelectContact} />;
             case 'dashboard': return <Dashboard contacts={contacts} appointments={appointments} onSelectContact={handleSelectContact} onUpdateFunnelStage={handleUpdateFunnelStage} />;
             case 'search': return <Search />;
-            case 'pige': return <PigePage contacts={contacts} onUpdateContact={handleUpdateContact} n8nWebhookUrl={n8nWebhookUrl} />;
+            case 'pige': return <PigePage contacts={contacts} onUpdateContact={handleUpdateContact} n8nWebhookUrl={n8nWebhookUrl} pigeState={pigeState} setPigeState={setPigeState} />;
             case 'calendar': return <CalendarPage appointments={appointments} contacts={contacts} savedAnnonces={savedAnnonces} onAddAppointment={handleAddAppointment} onUpdateAppointment={handleUpdateAppointment} onDeleteAppointment={handleDeleteAppointment} onSelectContact={handleSelectContact} />;
             case 'reports': return <ReportPage reports={reports} contacts={contacts} onDeleteReport={handleDeleteReport} onSelectContact={handleSelectContact} onOpenNewReportModal={handleOpenNewReportModal} onOpenEditReportModal={handleOpenEditReportModal} />;
             case 'estimation': return <EstimationPage contacts={contacts} onSaveEstimation={handleSaveEstimation} />;
@@ -479,3 +497,5 @@ const Sidebar: React.FC<{ activePage: Page, setActivePage: (page: Page) => void,
 );
 
 export default App;
+
+    

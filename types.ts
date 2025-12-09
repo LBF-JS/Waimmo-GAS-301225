@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 export enum Civility {
@@ -444,7 +445,23 @@ export interface Estimation {
     estimationDate: Date;
 }
 
-// FIX: Add missing types for PigePage
+// Pige Page Types
+export interface PigeResult {
+    id: string;
+    title: string;
+    description: string;
+    link?: string;
+    rating?: number;
+    listingCount?: number;
+    score?: number;
+    price?: string;
+    imageUrl?: string;
+    source?: string;
+    agencyName?: string;
+    latitude?: number;
+    longitude?: number;
+}
+
 export interface Criterion {
     id: string;
     label: string;
@@ -460,3 +477,5 @@ export interface Columns {
     importants: Criterion[];
     secondaries: Criterion[];
 }
+
+    

@@ -1,29 +1,14 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { GoogleGenAI, type GroundingChunk } from '@google/genai';
 import { ExternalLinkIcon, HomeIcon, PhoneArrowUpRightIcon, StarIcon, MapPinIcon, SparklesIcon, PlusIcon, TrashIcon, XCircleIcon, InformationCircleIcon } from '../components/Icons';
 import { PROPERTY_TYPE_OPTIONS } from '../constants';
 import { Modal } from '../components/Modal';
 import { AudioTranscriber } from '../components/AudioTranscriber';
-import { Contact, Criterion, Columns, ColumnId, SavedListing, ListingStatus } from '../types';
+import { Contact, Criterion, Columns, ColumnId, SavedListing, ListingStatus, PigeResult } from '../types';
+
 
 type SearchType = 'listings' | 'agencies';
-
-// --- Type Definitions ---
-export interface PigeResult {
-    id: string;
-    title: string;
-    description: string;
-    link?: string;
-    rating?: number;
-    listingCount?: number;
-    score?: number;
-    price?: string;
-    imageUrl?: string;
-    source?: string;
-    agencyName?: string;
-    latitude?: number;
-    longitude?: number;
-}
 
 
 // --- N8N WORKFLOW SIMULATION ---
@@ -70,7 +55,7 @@ const triggerN8nWebhook = async (webhookUrl: string, payload: any): Promise<Pige
 
 
 // --- Initial State ---
-const INITIAL_CRITERIA: Criterion[] = [
+export const INITIAL_CRITERIA: Criterion[] = [
     { id: 'propertyType', label: 'Type de bien', type: 'select', value: 'Maison', options: PROPERTY_TYPE_OPTIONS },
     { id: 'budget', label: 'Budget (€)', type: 'numberRange', value: { min: 200000, max: 400000 } },
     { id: 'rooms', label: 'Pièces (min)', type: 'numberRange', value: { min: 3 } },
@@ -279,6 +264,8 @@ interface PigePageProps {
     contacts: Contact[];
     onUpdateContact: (updatedContact: Contact) => void;
     n8nWebhookUrl: string;
+    pigeState: any;
+    setPigeState: (state: any) => void;
 }
 
 const formatCriterionForN8n = (c: Criterion): { label: string; value: any } => {
@@ -294,39 +281,45 @@ const formatCriterionForN8n = (c: Criterion): { label: string; value: any } => {
     }
 };
 
-export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n8nWebhookUrl }) => {
-    const [searchType, setSearchType] = useState<SearchType>('listings');
-    const [location, setLocation] = useState('Toulouse, France');
-    const [radius, setRadius] = useState(5);
-    const [availableCriteria, setAvailableCriteria] = useState<Criterion[]>(INITIAL_CRITERIA);
-    const [columns, setColumns] = useState<Columns>({ essentials: [], importants: [], secondaries: [] });
-    
-    const [freeTextInput, setFreeTextInput] = useState('');
+export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n8nWebhookUrl, pigeState, setPigeState }) => {
+
+    const {
+        searchType, location, radius, availableCriteria, columns, freeTextInput, 
+        isLoading, error, results, coordinates, selectedContactId, selectedResultIds
+    } = pigeState;
+
+    const setState = (updater: (prevState: any) => any) => {
+        setPigeState(updater(pigeState));
+    };
+
     const [transcriptionStatus, setTranscriptionStatus] = useState<{status: 'idle' | 'recording' | 'error', message?: string}>({status: 'idle'});
 
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [results, setResults] = useState<PigeResult[]>([]);
-    
-    const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number; } | null>(null);
     const [isLocating, setIsLocating] = useState(false);
     const [locationError, setLocationError] = useState<string | null>(null);
     
-    const [selectedContactId, setSelectedContactId] = useState('');
-    const [selectedResultIds, setSelectedResultIds] = useState<string[]>([]);
     const [isAssociateModalOpen, setIsAssociateModalOpen] = useState(false);
     
     const searchCancelledRef = useRef(false);
+    
+    useEffect(() => {
+        // This will cancel any ongoing fetch when the component unmounts
+        return () => {
+            searchCancelledRef.current = true;
+        };
+    }, []);
 
     const handleLoadCriteriaFromContact = (contactId: string) => {
-        setSelectedContactId(contactId);
+        setState((s: any) => ({ ...s, selectedContactId: contactId }));
         const contact = contacts.find(c => c.id === contactId);
 
         if (!contact || !contact.searchCriteria) {
-            setColumns({ essentials: [], importants: [], secondaries: [] });
-            setAvailableCriteria(JSON.parse(JSON.stringify(INITIAL_CRITERIA)));
-            setLocation('Toulouse, France');
-            setRadius(5);
+            setState((s: any) => ({
+                ...s,
+                columns: { essentials: [], importants: [], secondaries: [] },
+                availableCriteria: JSON.parse(JSON.stringify(INITIAL_CRITERIA)),
+                location: 'Toulouse, France',
+                radius: 5,
+            }));
             return;
         }
 
@@ -343,8 +336,11 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
             }
         };
         
-        if (criteria.cities) setLocation(criteria.cities);
-        if (criteria.searchRadiusKm) setRadius(Math.min(criteria.searchRadiusKm, 5));
+        setState((s: any) => ({ 
+            ...s,
+            location: criteria.cities || s.location,
+            radius: criteria.searchRadiusKm ? Math.min(criteria.searchRadiusKm, 5) : s.radius
+        }));
         
         if (criteria.targetPrice) {
             const margin = criteria.priceMarginPercent || 10;
@@ -398,8 +394,7 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
             });
         });
 
-        setAvailableCriteria(available);
-        setColumns(newColumns);
+        setState((s: any) => ({ ...s, availableCriteria: available, columns: newColumns }));
     };
 
     
@@ -410,9 +405,8 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
         let criterion: Criterion | undefined;
         let originColumn: ColumnId | 'available' | undefined;
         
-        // Find criterion and its origin
-        if (availableCriteria.some(c => c.id === criterionId)) {
-            criterion = availableCriteria.find(c => c.id === criterionId);
+        if (availableCriteria.some((c: Criterion) => c.id === criterionId)) {
+            criterion = availableCriteria.find((c: Criterion) => c.id === criterionId);
             originColumn = 'available';
         } else {
             for (const col of Object.keys(columns) as ColumnId[]) {
@@ -427,11 +421,9 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
         
         if (!criterion || !originColumn || originColumn === targetColumnId) return;
 
-        // --- Immutable state update ---
         const newAvailable = [...availableCriteria];
         const newColumns = JSON.parse(JSON.stringify(columns));
 
-        // 1. Remove from origin
         if (originColumn === 'available') {
             const index = newAvailable.findIndex(c => c.id === criterionId);
             if (index > -1) newAvailable.splice(index, 1);
@@ -440,63 +432,51 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
             if (index > -1) newColumns[originColumn].splice(index, 1);
         }
 
-        // 2. Add to destination
         if (targetColumnId === 'available') {
             newAvailable.push(criterion);
         } else {
             newColumns[targetColumnId].push(criterion);
         }
         
-        setAvailableCriteria(newAvailable);
-        setColumns(newColumns);
+        setState((s: any) => ({ ...s, availableCriteria: newAvailable, columns: newColumns }));
     };
 
     const handleDeleteCriterion = useCallback((criterionId: string) => {
         let criterionToRemove: Criterion | undefined;
         let originColumn: ColumnId | undefined;
 
-        // Find the criterion and its origin column
-        for (const col of Object.keys(columns) as ColumnId[]) {
-            const found = columns[col].find(c => c.id === criterionId);
+        for (const col of Object.keys(pigeState.columns) as ColumnId[]) {
+            const found = pigeState.columns[col].find((c: Criterion) => c.id === criterionId);
             if (found) {
                 criterionToRemove = found;
                 originColumn = col;
                 break;
             }
         }
-
-        // If not found in columns, do nothing.
         if (!criterionToRemove || !originColumn) return;
 
-        // Use functional updates for state to avoid race conditions
-        setColumns(prevColumns => {
-            const newColumns = { ...prevColumns };
-            // Remove from the column
-            newColumns[originColumn] = newColumns[originColumn].filter(c => c.id !== criterionId);
-            return newColumns;
-        });
+        const newColumns = { ...pigeState.columns };
+        newColumns[originColumn] = newColumns[originColumn].filter((c: Criterion) => c.id !== criterionId);
 
+        let newAvailableCriteria = [...pigeState.availableCriteria];
         const isPredefined = INITIAL_CRITERIA.some(c => c.id === criterionId);
-
-        if (isPredefined) {
-            setAvailableCriteria(prevAvailable => {
-                // Avoid adding duplicates
-                if (prevAvailable.some(c => c.id === criterionId)) {
-                    return prevAvailable;
-                }
-                return [...prevAvailable, criterionToRemove!];
-            });
+        if (isPredefined && !newAvailableCriteria.some(c => c.id === criterionId)) {
+             newAvailableCriteria.push(criterionToRemove);
         }
-    }, [columns]);
+        
+        setState((s: any) => ({ ...s, columns: newColumns, availableCriteria: newAvailableCriteria }));
+    }, [pigeState, setState]);
     
     const handleUpdateCriterion = (criterionId: string, value: any) => {
         const updateInArray = (arr: Criterion[]) => arr.map(c => c.id === criterionId ? { ...c, value } : c);
-        
-        setAvailableCriteria(prev => updateInArray(prev));
-        setColumns(prev => ({
-            essentials: updateInArray(prev.essentials),
-            importants: updateInArray(prev.importants),
-            secondaries: updateInArray(prev.secondaries),
+        setState((s: any) => ({
+            ...s,
+            availableCriteria: updateInArray(s.availableCriteria),
+            columns: {
+                essentials: updateInArray(s.columns.essentials),
+                importants: updateInArray(s.columns.importants),
+                secondaries: updateInArray(s.columns.secondaries),
+            }
         }));
     };
 
@@ -507,11 +487,11 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
             label: freeTextInput.trim(),
             type: 'custom',
         };
-        setColumns(prev => ({
-            ...prev,
-            [columnId]: [...prev[columnId], newCriterion],
+        setState((s: any) => ({
+            ...s,
+            columns: { ...s.columns, [columnId]: [...s.columns[columnId], newCriterion] },
+            freeTextInput: ''
         }));
-        setFreeTextInput('');
     };
 
     const handleGeolocate = () => {
@@ -519,8 +499,7 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
         setLocationError(null);
         navigator.geolocation.getCurrentPosition(
             (pos) => {
-                setCoordinates({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-                setLocation("Ma position actuelle");
+                setState((s: any) => ({ ...s, coordinates: { latitude: pos.coords.latitude, longitude: pos.coords.longitude }, location: "Ma position actuelle" }));
                 setIsLocating(false);
             },
             (err) => {
@@ -532,16 +511,13 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
     
     const handleCancel = () => {
         searchCancelledRef.current = true;
-        setIsLoading(false);
+        setState((s: any) => ({ ...s, isLoading: false }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         searchCancelledRef.current = false;
-        setIsLoading(true);
-        setError(null);
-        setResults([]);
-        setSelectedResultIds([]);
+        setState((s: any) => ({ ...s, isLoading: true, error: null, results: [], selectedResultIds: [] }));
 
         try {
             if (searchType === 'listings') {
@@ -554,7 +530,7 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                 };
                 const n8nResults = await triggerN8nWebhook(n8nWebhookUrl, payload);
                 if (searchCancelledRef.current) return;
-                setResults(n8nResults);
+                setState((s: any) => ({ ...s, results: n8nResults }));
             } else { // 'agencies' search
                 const prompt = `**ROLE**: Tu es un robot d'indexation web spécialisé dans l'annuaire d'entreprises.
                 **TA MISSION**: Utilise tes outils de recherche web et de cartographie pour trouver des agences immobilières dans un rayon de ${radius}km autour de "${location}".
@@ -571,14 +547,14 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                 if (searchCancelledRef.current) return;
 
                 const parsedResults = parseGeminiResponse(response.text);
-                setResults(parsedResults);
+                 setState((s: any) => ({ ...s, results: parsedResults }));
             }
         } catch (err: any) {
             if (searchCancelledRef.current) return;
             console.error(err);
-            setError("Une erreur est survenue lors de la recherche. Détails: " + err.message);
+            setState((s: any) => ({ ...s, error: "Une erreur est survenue lors de la recherche. Détails: " + err.message }));
         } finally {
-            if (!searchCancelledRef.current) setIsLoading(false);
+            if (!searchCancelledRef.current) setState((s: any) => ({ ...s, isLoading: false }));
         }
     };
     
@@ -614,17 +590,18 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
             }));
         } catch (e: any) {
             console.error("Failed to parse JSON response:", e, "Raw text:", text);
-            setError(`Failed to parse JSON response:\n${e.message}`);
+            setState((s: any) => ({...s, error: `Failed to parse JSON response:\n${e.message}` }));
             return [];
         }
     };
 
     const handleSelectResult = (resultId: string) => {
-        setSelectedResultIds(prev =>
-            prev.includes(resultId)
-                ? prev.filter(id => id !== resultId)
-                : [...prev, resultId]
-        );
+        setState((s: any) => ({
+            ...s,
+            selectedResultIds: s.selectedResultIds.includes(resultId)
+                ? s.selectedResultIds.filter((id: string) => id !== resultId)
+                : [...s.selectedResultIds, resultId]
+        }));
     };
 
     const handleAssociateListings = (contactId: string) => {
@@ -656,7 +633,7 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
         onUpdateContact(updatedContact);
         
         alert(`${newListings.length} annonce(s) ajoutée(s) au dossier de ${contact.firstName} ${contact.lastName}.`);
-        setSelectedResultIds([]);
+        setState((s: any) => ({ ...s, selectedResultIds: [] }));
     };
 
     const handleOpenAssociateModal = () => {
@@ -673,6 +650,9 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
         setIsAssociateModalOpen(false);
     };
 
+    const handleFieldChange = (field: string, value: any) => {
+        setState((s: any) => ({ ...s, [field]: value }));
+    };
 
     return (
         <div className="space-y-4">
@@ -684,12 +664,12 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                  <form onSubmit={handleSubmit} className="space-y-3">
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                         <div className="flex items-center space-x-2 rounded-lg bg-input p-1">
-                             <RadioOption name="searchType" value="listings" checked={searchType === 'listings'} onChange={(e) => setSearchType(e.target.value as SearchType)} label="Annonces" />
-                             <RadioOption name="searchType" value="agencies" checked={searchType === 'agencies'} onChange={(e) => setSearchType(e.target.value as SearchType)} label="Agences" />
+                             <RadioOption name="searchType" value="listings" checked={searchType === 'listings'} onChange={(e) => handleFieldChange('searchType', e.target.value as SearchType)} label="Annonces" />
+                             <RadioOption name="searchType" value="agencies" checked={searchType === 'agencies'} onChange={(e) => handleFieldChange('searchType', e.target.value as SearchType)} label="Agences" />
                         </div>
                         <div className="flex-grow relative min-w-[200px]">
                             <label htmlFor="location" className="sr-only">Localisation</label>
-                            <input type="text" name="location" id="location" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-input p-2 rounded-md border-border pr-10" required />
+                            <input type="text" name="location" id="location" value={location} onChange={(e) => handleFieldChange('location', e.target.value)} className="w-full bg-input p-2 rounded-md border-border pr-10" required />
                             <button type="button" onClick={handleGeolocate} disabled={isLocating} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-secondary hover:text-primary disabled:opacity-50" aria-label="Utiliser ma position actuelle">
                                 {isLocating ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div> : <MapPinIcon className="w-5 h-5"/>}
                             </button>
@@ -701,7 +681,7 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                                 name="radius" 
                                 id="radius" 
                                 value={radius} 
-                                onChange={(e) => setRadius(Math.min(5, Number(e.target.value)))} 
+                                onChange={(e) => handleFieldChange('radius', Math.min(5, Number(e.target.value)))} 
                                 min="1" 
                                 max="5" 
                                 className="w-24 bg-input p-2 rounded-md border-border" 
@@ -763,14 +743,14 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                                     <textarea
                                     id="freeTextInput"
                                     value={freeTextInput}
-                                    onChange={(e) => setFreeTextInput(e.target.value)}
+                                    onChange={(e) => handleFieldChange('freeTextInput', e.target.value)}
                                     rows={3}
                                     className="block w-full bg-input border-border rounded-md p-2 pr-12"
                                     placeholder="Ex: 'proche d'une école primaire', 'sans vis-à-vis', 'dernier étage avec ascenseur'..."
                                     />
                                     <div className="absolute top-2 right-2">
                                     <AudioTranscriber
-                                        onTranscriptionUpdate={textChunk => setFreeTextInput(prev => prev + textChunk)}
+                                        onTranscriptionUpdate={textChunk => handleFieldChange('freeTextInput', pigeState.freeTextInput + textChunk)}
                                         onTranscriptionComplete={() => {}}
                                         onStatusChange={(status, message) => setTranscriptionStatus({ status, message })}
                                     />
@@ -792,7 +772,7 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                                 >
                                     <h4 className="font-semibold text-center text-primary mb-3">Critères disponibles</h4>
                                     <div className="space-y-2">
-                                        {availableCriteria.map(c => 
+                                        {availableCriteria.map((c: Criterion) => 
                                             <div key={c.id} draggable onDragStart={(e) => e.dataTransfer.setData('criterionId', c.id)}>
                                                 <CriterionPill criterion={c} onUpdate={(value) => handleUpdateCriterion(c.id, value)} isSource/>
                                             </div>
@@ -854,7 +834,7 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                             <button onClick={handleOpenAssociateModal} className="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-md">
                                 Associer à un contact...
                             </button>
-                            <button onClick={() => setSelectedResultIds([])} className="p-2 text-secondary hover:text-primary" title="Désélectionner tout">
+                            <button onClick={() => setState((s:any) => ({...s, selectedResultIds:[]}))} className="p-2 text-secondary hover:text-primary" title="Désélectionner tout">
                                 <XCircleIcon className="w-5 h-5" />
                             </button>
                         </div>
@@ -890,3 +870,6 @@ const RadioOption: React.FC<{name: string, value: string, checked: boolean, onCh
     </label>
 );
 
+
+
+    
