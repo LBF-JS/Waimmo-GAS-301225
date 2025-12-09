@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { GoogleGenAI, type GroundingChunk } from '@google/genai';
-import { ExternalLinkIcon, HomeIcon, PhoneArrowUpRightIcon, StarIcon, MapPinIcon, SparklesIcon, PlusIcon, TrashIcon, XCircleIcon } from '../components/Icons';
+import { ExternalLinkIcon, HomeIcon, PhoneArrowUpRightIcon, StarIcon, MapPinIcon, SparklesIcon, PlusIcon, TrashIcon, XCircleIcon, InformationCircleIcon } from '../components/Icons';
 import { PROPERTY_TYPE_OPTIONS } from '../constants';
 import { Modal } from '../components/Modal';
 import { AudioTranscriber } from '../components/AudioTranscriber';
@@ -154,7 +154,7 @@ const DropColumn: React.FC<{
             onDragOver={(e) => { e.preventDefault(); setIsOver(true); }}
             onDragLeave={() => setIsOver(false)}
             onDrop={(e) => { e.preventDefault(); setIsOver(false); onDrop(e, columnId); }}
-            className={`bg-background p-3 rounded-lg min-h-[200px] border-2 border-dashed transition-colors ${isOver ? 'border-brand' : 'border-border'}`}
+            className={`p-3 rounded-lg min-h-[200px] border-2 border-dashed transition-colors ${isOver ? 'border-brand bg-brand/10' : 'border-border bg-background'}`}
         >
             <h4 className="font-semibold text-center text-primary mb-3">{title}</h4>
             <div className="space-y-2">
@@ -695,7 +695,7 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                         </div>
                         <div>
                             <label htmlFor="radius" className="text-xs text-secondary">Rayon (km)</label>
-                            <input type="number" name="radius" id="radius" value={radius} onChange={(e) => setRadius(Number(e.target.value))} min="1" className="w-24 bg-input p-2 rounded-md border-border" required />
+                            <input type="number" name="radius" id="radius" value={radius} onChange={(e) => setRadius(Number(e.target.value))} min="1" max="5" className="w-24 bg-input p-2 rounded-md border-border" required />
                         </div>
                         <div className="flex-grow flex justify-end">
                             {!isLoading ? (
@@ -709,6 +709,10 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                                 </button>
                             )}
                         </div>
+                    </div>
+                     <div className="flex items-center gap-2 text-xs text-secondary bg-background p-2 rounded-md">
+                        <InformationCircleIcon className="w-5 h-5 text-sky-400 flex-shrink-0"/>
+                        <span>Pour les grandes villes, privilégiez les noms de quartiers dans le champ de localisation pour des résultats plus précis.</span>
                     </div>
                     {searchType === 'listings' && (
                         <div className="pt-3 mt-2 border-t border-border animate-fade-in">
@@ -869,8 +873,14 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
 };
 
 const RadioOption: React.FC<{name: string, value: string, checked: boolean, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, label: string}> = ({ name, value, checked, onChange, label }) => (
-    <label className={`flex items-center space-x-2 px-3 py-1.5 rounded-md cursor-pointer transition-colors text-sm font-medium ${checked ? 'bg-brand text-white' : 'bg-surface-secondary hover:bg-surface'}`}>
+    <label className={`flex items-center space-x-2 px-3 py-1.5 rounded-md cursor-pointer transition-colors text-sm font-medium ${checked ? 'bg-brand text-white' : 'hover:bg-surface'}`}>
         <input type="radio" name={name} value={value} checked={checked} onChange={onChange} className="hidden" />
         <span>{label}</span>
     </label>
+);
+
+const InformationCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+  </svg>
 );
