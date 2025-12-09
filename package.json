@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node vite-fix.js",
+    "dev": "node server.js",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -13,10 +13,11 @@
     "leaflet": "^1.9.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-leaflet": "^5.0.0-alpha.1"
+    "react-leaflet": "^4.2.1",
+    "express": "^4.19.2",
+    "cors": "^2.8.5"
   },
   "devDependencies": {
-    "@react-leaflet/core": "^5.0.0-alpha.1",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.4.22",

@@ -10,13 +10,7 @@ export default defineConfig(({ mode }) => {
         port: 3000,
         host: '0.0.0.0',
         proxy: {
-          '/n8n-proxy': {
-            target: env.VITE_N8N_WEBHOOK_URL,
-            changeOrigin: true,
-            rewrite: (path) => path.replace(/^\/n8n-proxy/, ''),
-            secure: false,
-            timeout: 120000, // 2 minutes timeout
-          },
+          // Le proxy est maintenant géré par le serveur Express personnalisé.
         },
       },
       plugins: [react(), isoImport()],

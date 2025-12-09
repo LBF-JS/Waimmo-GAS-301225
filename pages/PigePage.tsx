@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+// FIX: Import 'GroundingChunk' type to resolve the "Cannot find name" error.
 import { GoogleGenAI, type GroundingChunk } from '@google/genai';
 import { ExternalLinkIcon, HomeIcon, PhoneArrowUpRightIcon, StarIcon, MapPinIcon, SparklesIcon, PlusIcon, TrashIcon, XCircleIcon, InformationCircleIcon } from '../components/Icons';
 import { PROPERTY_TYPE_OPTIONS } from '../constants';
@@ -17,11 +18,13 @@ const triggerN8nWebhook = async (webhookUrl: string, payload: any): Promise<Pige
         throw new Error("L'URL du webhook n8n n'est pas configurée. Veuillez l'ajouter dans la page des paramètres.");
     }
 
-    // Use the proxy path instead of the direct URL
-    const response = await fetch('/n8n-proxy', {
+    // The fetch call now goes to the local server, which will proxy the request to the n8n webhook URL.
+    // The actual webhook URL is passed in a header for the server to use.
+    const response = await fetch('/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-N8N-Webhook-Url': webhookUrl, // Pass the real webhook URL in a header
         },
         body: JSON.stringify(payload),
     });
