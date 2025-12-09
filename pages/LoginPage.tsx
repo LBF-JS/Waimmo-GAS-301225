@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { WaImmoLogoIcon } from '../components/Icons';
+import { WaImmoLogoIcon, EyeIcon, EyeSlashIcon } from '../components/Icons';
 
 interface LoginPageProps {
   onLoginSuccess: () => void;
@@ -8,6 +8,7 @@ interface LoginPageProps {
 export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -62,21 +63,32 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             </div>
 
             <div>
-              {/* FIX: Removed extraneous 'a' property */}
               <label htmlFor="password" className="block text-sm font-medium text-secondary">
                 Mot de passe
               </label>
-              <div className="mt-1">
+              <div className="mt-1 relative">
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={isPasswordVisible ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-border rounded-md shadow-sm placeholder-secondary focus:outline-none focus:ring-brand focus:border-brand sm:text-sm bg-input text-primary"
+                  className="appearance-none block w-full px-3 py-2 border border-border rounded-md shadow-sm placeholder-secondary focus:outline-none focus:ring-brand focus:border-brand sm:text-sm bg-input text-primary pr-10"
                 />
+                <button
+                    type="button"
+                    onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                    className="absolute inset-y-0 right-0 px-3 flex items-center text-secondary hover:text-primary"
+                    aria-label={isPasswordVisible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                >
+                    {isPasswordVisible ? (
+                        <EyeSlashIcon className="w-5 h-5" />
+                    ) : (
+                        <EyeIcon className="w-5 h-5" />
+                    )}
+                </button>
               </div>
             </div>
             
