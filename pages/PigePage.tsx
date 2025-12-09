@@ -20,7 +20,7 @@ const triggerN8nWebhook = async (webhookUrl: string, payload: any): Promise<Pige
 
     // The fetch call now goes to the local server, which will proxy the request to the n8n webhook URL.
     // The actual webhook URL is passed in a header for the server to use.
-    const response = await fetch('/', {
+    const response = await fetch('/n8n-proxy', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

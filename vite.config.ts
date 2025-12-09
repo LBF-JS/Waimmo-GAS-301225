@@ -7,10 +7,30 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
       server: {
-        port: 3000,
+        port: 9002,
         host: '0.0.0.0',
         proxy: {
-          // Le proxy est maintenant géré par le serveur Express personnalisé.
+            '/n8n-proxy': {
+              target: 'https://n8n.wa-master.fr', // Default, will be overridden by header
+              changeOrigin: true,
+              rewrite: (path) => path.replace(/^\/n8n-proxy/, ''),
+              configure: (proxy, options) => {
+                proxy.on('proxyReq', (proxyReq, req, res) => {
+                   if (req.headers['x-n8n-webhook-url']) {
+                        const targetUrl = new URL(req.headers['x-n8n-webhook-url'] as string);
+                        proxyReq.setHeader('host', targetUrl.hostname);
+                        // Vite's proxy automatically sets the target path,
+                        // so we just need to ensure the rewritten path is correct in the main config.
+                   }
+                   if (req.body) {
+                        const bodyData = JSON.stringify(req.body);
+                        proxyReq.setHeader('Content-Type', 'application/json');
+                        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+                        proxyReq.write(bodyData);
+                   }
+                });
+              }
+            }
         },
       },
       plugins: [react(), isoImport()],
