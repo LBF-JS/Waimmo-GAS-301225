@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
+    "dev": "node server.js",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -15,7 +15,8 @@
     "leaflet": "^1.9.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "leaflet-react": "^3.0.5"
+    "leaflet-react": "^3.0.5",
+    "vite": "^6.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
@@ -25,7 +26,6 @@
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "~5.8.2",
-    "vite": "^6.2.0",
     "vite-plugin-iso-import": "^1.1.0"
   }
 }
