@@ -9,6 +9,14 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        proxy: {
+          '/n8n-proxy': {
+            target: env.VITE_N8N_WEBHOOK_URL,
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/n8n-proxy/, ''),
+            secure: false,
+          },
+        },
       },
       plugins: [react(), isoImport()],
       define: {
