@@ -348,7 +348,7 @@ const App = () => {
             case 'home': return <HomePage contacts={contacts} appointments={appointments} onSelectContact={handleSelectContact} />;
             case 'dashboard': return <Dashboard contacts={contacts} appointments={appointments} onSelectContact={handleSelectContact} onUpdateFunnelStage={handleUpdateFunnelStage} />;
             case 'search': return <Search />;
-            case 'pige': return <PigePage contacts={contacts} onUpdateContact={handleUpdateContact} />;
+            case 'pige': return <PigePage contacts={contacts} onUpdateContact={handleUpdateContact} n8nWebhookUrl={n8nWebhookUrl} />;
             case 'calendar': return <CalendarPage appointments={appointments} contacts={contacts} savedAnnonces={savedAnnonces} onAddAppointment={handleAddAppointment} onUpdateAppointment={handleUpdateAppointment} onDeleteAppointment={handleDeleteAppointment} onSelectContact={handleSelectContact} />;
             case 'reports': return <ReportPage reports={reports} contacts={contacts} onDeleteReport={handleDeleteReport} onSelectContact={handleSelectContact} onOpenNewReportModal={handleOpenNewReportModal} onOpenEditReportModal={handleOpenEditReportModal} />;
             case 'estimation': return <EstimationPage contacts={contacts} onSaveEstimation={handleSaveEstimation} />;

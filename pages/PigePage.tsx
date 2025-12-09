@@ -27,96 +27,44 @@ export interface PigeResult {
 
 
 // --- N8N WORKFLOW SIMULATION ---
-const triggerN8nWebhook = async (payload: any): Promise<PigeResult[]> => {
-    console.log("===== DÉCLENCHEMENT DU WEBHOOK N8N =====");
-    console.log("Les données suivantes seraient envoyées à votre workflow n8n :");
-    console.log(JSON.stringify(payload, null, 2));
-    console.log("========================================");
+const triggerN8nWebhook = async (webhookUrl: string, payload: any): Promise<PigeResult[]> => {
+    if (!webhookUrl) {
+        throw new Error("L'URL du webhook n8n n'est pas configurée. Veuillez l'ajouter dans la page des paramètres.");
+    }
 
-    // Simulate network delay for webhook call + workflow execution
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
 
-    // Return high-quality, realistic mock data as if n8n returned it
-    return [
-        {
-            id: 'n8n-res-1',
-            title: 'Superbe T4 avec terrasse en dernier étage',
-            agencyName: 'Agence du Centre',
-            price: '485 000 €',
-            link: 'https://www.seloger.com/',
-            imageUrl: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1974&auto=format&fit=crop',
-            description: 'Magnifique appartement de 95m² avec une terrasse de 25m² offrant une vue dégagée. Prestations de qualité, cuisine équipée, 3 chambres.',
-            latitude: 43.6047,
-            longitude: 1.4442,
-            score: 92,
-            source: 'Workflow n8n'
-        },
-        {
-            id: 'n8n-res-2',
-            title: 'Maison de ville avec jardin et garage',
-            agencyName: 'ImmoSud',
-            price: '520 000 €',
-            link: 'https://www.logic-immo.com/',
-            imageUrl: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071&auto=format&fit=crop',
-            description: 'Rare sur le secteur, maison de 120m² sur une parcelle de 300m². Grand séjour, 4 chambres, garage. Proche des transports.',
-            latitude: 43.585,
-            longitude: 1.4542,
-            score: 88,
-            source: 'Workflow n8n'
-        },
-        {
-            id: 'n8n-res-3',
-            title: 'Appartement T3 rénové - Hypercentre',
-            agencyName: 'Laforet',
-            price: '350 000 €',
-            link: 'https://www.lefigaro.fr/immobilier/',
-            imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop',
-            description: 'Au coeur de la ville, ce T3 de 70m² a été entièrement rénové avec goût. Pièce de vie lumineuse, deux chambres calmes.',
-            latitude: 43.601,
-            longitude: 1.44,
-            score: 82,
-            source: 'Workflow n8n'
-        },
-        {
-            id: 'n8n-res-4',
-            title: 'Villa d\'architecte avec piscine',
-            agencyName: 'Orpi',
-            price: '780 000 €',
-            link: 'https://www.orpi.com/',
-            imageUrl: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=2070&auto=format&fit=crop',
-            description: 'Prestations exceptionnelles pour cette villa contemporaine de 200m² sur un terrain de 1500m². Piscine, domotique, vue imprenable.',
-            latitude: 43.63,
-            longitude: 1.4,
-            score: 75,
-            source: 'Workflow n8n'
-        },
-        {
-            id: 'n8n-res-5',
-            title: 'Loft atypique proche métro',
-            agencyName: 'Century 21',
-            price: '410 000 €',
-            link: 'https://www.century21.fr/',
-            imageUrl: 'https://images.unsplash.com/photo-1600607687932-e3a428987442?q=80&w=2070&auto=format&fit=crop',
-            description: 'Ancien atelier transformé en loft de 100m². Beaux volumes, style industriel. Idéal pour un couple ou un artiste.',
-            latitude: 43.615,
-            longitude: 1.43,
-            score: 68,
-            source: 'Workflow n8n'
-        },
-        {
-            id: 'n8n-res-6',
-            title: 'T2 avec grand balcon',
-            agencyName: 'Stéphane Plaza Immobilier',
-            price: '230 000 €',
-            link: 'https://www.stephaneplazaimmobilier.com/',
-            imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1980&auto=format&fit=crop',
-            description: 'Dans une résidence récente et sécurisée, appartement T2 de 45m² avec un balcon de 12m². Place de parking incluse.',
-            latitude: 43.57,
-            longitude: 1.46,
-            score: 65,
-            source: 'Workflow n8n'
-        },
-    ];
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Erreur du webhook n8n: ${response.status} ${response.statusText}. Réponse: ${errorText}`);
+    }
+
+    const results = await response.json();
+
+    if (!Array.isArray(results)) {
+        console.error("La réponse du webhook n'est pas un tableau:", results);
+        throw new Error("Le format de la réponse du webhook n8n est incorrect. Un tableau de résultats est attendu.");
+    }
+
+    return results.map((item, index) => ({
+        id: item.id || `n8n-res-${Date.now()}-${index}`,
+        title: item.title || 'Sans titre',
+        description: item.description || '',
+        link: item.link,
+        price: item.price,
+        imageUrl: item.imageUrl,
+        source: item.source || 'n8n',
+        agencyName: item.agencyName,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        score: item.score,
+    }));
 };
 
 
@@ -329,6 +277,7 @@ const AgencyResultCard: React.FC<{result: PigeResult}> = ({ result }) => {
 interface PigePageProps {
     contacts: Contact[];
     onUpdateContact: (updatedContact: Contact) => void;
+    n8nWebhookUrl: string;
 }
 
 const formatCriterionForN8n = (c: Criterion): { label: string; value: any } => {
@@ -344,7 +293,7 @@ const formatCriterionForN8n = (c: Criterion): { label: string; value: any } => {
     }
 };
 
-export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact }) => {
+export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n8nWebhookUrl }) => {
     const [searchType, setSearchType] = useState<SearchType>('listings');
     const [location, setLocation] = useState('Toulouse, France');
     const [radius, setRadius] = useState(5);
@@ -602,7 +551,7 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact })
                     importants: columns.importants.map(formatCriterionForN8n),
                     bonus: columns.secondaries.map(formatCriterionForN8n)
                 };
-                const n8nResults = await triggerN8nWebhook(payload);
+                const n8nResults = await triggerN8nWebhook(n8nWebhookUrl, payload);
                 if (searchCancelledRef.current) return;
                 setResults(n8nResults);
             } else { // 'agencies' search
