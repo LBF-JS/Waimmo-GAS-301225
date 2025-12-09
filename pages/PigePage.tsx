@@ -152,16 +152,16 @@ const CriterionPill: React.FC<{
                         value={criterion.value}
                         onChange={(e) => onUpdate(e.target.value)}
                         onClick={(e) => e.stopPropagation()}
-                        className="bg-gray-700 text-white text-xs rounded p-1"
+                        className="bg-input text-primary text-xs rounded p-1 border-border"
                     >
-                        {criterion.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        {criterion.options?.map(opt => <option key={opt} value={opt} className="bg-surface text-primary">{opt}</option>)}
                     </select>
                 );
             case 'numberRange':
                 return (
                     <div className="flex items-center gap-1">
-                        {criterion.value.min !== undefined && <input type="number" value={criterion.value.min} onChange={(e) => handleValueChange('min', e.target.value)} onClick={(e) => e.stopPropagation()} className="w-20 bg-gray-700 text-white text-xs rounded p-1" placeholder="Min" />}
-                        {criterion.value.max !== undefined && <input type="number" value={criterion.value.max} onChange={(e) => handleValueChange('max', e.target.value)} onClick={(e) => e.stopPropagation()} className="w-20 bg-gray-700 text-white text-xs rounded p-1" placeholder="Max" />}
+                        {criterion.value.min !== undefined && <input type="number" value={criterion.value.min} onChange={(e) => handleValueChange('min', e.target.value)} onClick={(e) => e.stopPropagation()} className="w-20 bg-input text-primary text-xs rounded p-1 border-border" placeholder="Min" />}
+                        {criterion.value.max !== undefined && <input type="number" value={criterion.value.max} onChange={(e) => handleValueChange('max', e.target.value)} onClick={(e) => e.stopPropagation()} className="w-20 bg-input text-primary text-xs rounded p-1 border-border" placeholder="Max" />}
                     </div>
                 );
             default:
@@ -172,7 +172,7 @@ const CriterionPill: React.FC<{
         <div
             draggable={!isSource}
             onDragStart={isSource ? undefined : (e) => { e.dataTransfer.setData('criterionId', criterion.id); }}
-            className={`flex items-center justify-between p-2 rounded-lg bg-gray-800 border border-gray-700 cursor-grab active:cursor-grabbing ${isSource ? 'cursor-copy' : ''}`}
+            className={`flex items-center justify-between p-2 rounded-lg bg-surface border border-border cursor-grab active:cursor-grabbing ${isSource ? 'cursor-copy' : ''}`}
         >
             <div className="flex-grow flex items-center gap-2">
                 <span className="text-sm font-medium text-primary">{criterion.label}</span>
@@ -182,7 +182,7 @@ const CriterionPill: React.FC<{
                 <button 
                     type="button" 
                     onClick={(e) => { e.stopPropagation(); onDelete(); }} 
-                    className="ml-2 p-1 text-gray-500 hover:text-red-500 flex-shrink-0"
+                    className="ml-2 p-1 text-secondary hover:text-red-500 flex-shrink-0"
                     aria-label="Supprimer le critère"
                 >
                     <TrashIcon className="w-4 h-4" />
@@ -206,7 +206,7 @@ const DropColumn: React.FC<{
             onDragOver={(e) => { e.preventDefault(); setIsOver(true); }}
             onDragLeave={() => setIsOver(false)}
             onDrop={(e) => { e.preventDefault(); setIsOver(false); onDrop(e, columnId); }}
-            className={`bg-gray-900/50 p-3 rounded-lg min-h-[200px] border-2 border-dashed transition-colors ${isOver ? 'border-brand' : 'border-gray-700'}`}
+            className={`bg-background p-3 rounded-lg min-h-[200px] border-2 border-dashed transition-colors ${isOver ? 'border-brand' : 'border-border'}`}
         >
             <h4 className="font-semibold text-center text-primary mb-3">{title}</h4>
             <div className="space-y-2">
@@ -217,7 +217,7 @@ const DropColumn: React.FC<{
                         onUpdate={(value) => onUpdateCriterion(c.id, value)} 
                         onDelete={() => onDeleteCriterion(c.id)}
                     />
-                )) : <p className="text-center text-xs text-gray-500 pt-10">Glissez un critère ici</p>}
+                )) : <p className="text-center text-xs text-secondary pt-10">Glissez un critère ici</p>}
             </div>
         </div>
     );
@@ -239,7 +239,7 @@ const ResultCard: React.FC<{
     
     return (
         <div 
-            className={`bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col h-full transform hover:scale-105 transition-transform duration-300 relative cursor-pointer ${isSelected ? 'ring-2 ring-brand' : ''}`}
+            className={`bg-surface rounded-lg shadow-lg overflow-hidden flex flex-col h-full transform hover:scale-105 transition-transform duration-300 relative cursor-pointer ${isSelected ? 'ring-2 ring-brand' : ''}`}
             onClick={() => onSelect(result.id)}
         >
             <div className="absolute top-2 left-2 z-20">
@@ -247,7 +247,7 @@ const ResultCard: React.FC<{
                     type="checkbox"
                     checked={isSelected}
                     readOnly
-                    className="h-5 w-5 rounded text-brand bg-gray-900/50 border-gray-500 focus:ring-brand"
+                    className="h-5 w-5 rounded text-brand bg-surface/50 border-border focus:ring-brand"
                 />
             </div>
             
@@ -282,7 +282,7 @@ const ResultCard: React.FC<{
                         <span className="text-xs font-medium text-secondary">Compatibilité</span>
                         <span className="text-primary font-semibold text-xs">{result.score}%</span>
                     </div>
-                    <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div className="w-full bg-surface-secondary rounded-full h-2">
                         <div 
                             className={`bg-gradient-to-r ${getScoreColor(result.score)} h-2 rounded-full`}
                             style={{ width: `${result.score}%` }}
@@ -308,7 +308,7 @@ const ResultCard: React.FC<{
 
 const AgencyResultCard: React.FC<{result: PigeResult}> = ({ result }) => {
     return (
-        <a href={result.link} target="_blank" rel="noopener noreferrer" className="block bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col h-full transform hover:scale-105 transition-transform duration-300 p-4">
+        <a href={result.link} target="_blank" rel="noopener noreferrer" className="block bg-surface rounded-lg shadow-lg overflow-hidden flex flex-col h-full transform hover:scale-105 transition-transform duration-300 p-4">
             <h3 className="text-md font-bold text-primary truncate flex-grow" title={result.title}>{result.title}</h3>
             <p className="text-sm text-secondary mt-2 truncate">{result.description}</p>
             <div className="mt-4 flex justify-between items-center text-xs text-secondary">
@@ -906,7 +906,7 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact })
                             <button 
                                 key={contact.id} 
                                 onClick={() => handleConfirmAssociation(contact.id)}
-                                className="w-full text-left p-3 bg-gray-800 hover:bg-gray-700 rounded-md transition-colors"
+                                className="w-full text-left p-3 bg-surface-secondary hover:bg-opacity-80 rounded-md transition-colors"
                             >
                                 <span className="font-semibold text-primary">{contact.firstName} {contact.lastName}</span>
                                 <span className="text-sm text-secondary block">{contact.contactType}</span>
