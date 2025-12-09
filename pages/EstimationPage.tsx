@@ -271,7 +271,7 @@ export const EstimationPage: React.FC<EstimationPageProps> = ({ contacts, onSave
                                     className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                                         formData.selectedFeatures.includes(feature)
                                             ? 'bg-brand text-white border-brand'
-                                            : 'bg-gray-800 text-secondary border-gray-700 hover:border-brand-light'
+                                            : 'bg-surface text-secondary border-border hover:border-brand-light'
                                     }`}
                                 >
                                     {feature}
@@ -383,14 +383,14 @@ export const EstimationPage: React.FC<EstimationPageProps> = ({ contacts, onSave
 const InputField = (props: React.ComponentProps<'input'> & { label: string }) => (
   <div>
     <label htmlFor={props.name} className="block text-sm font-medium text-secondary">{props.label}</label>
-    <input id={props.name} {...props} className="mt-1 block w-full bg-gray-900 border-gray-700 rounded-md shadow-sm p-2" />
+    <input id={props.name} {...props} className="mt-1 block w-full bg-input border-border rounded-md shadow-sm p-2" />
   </div>
 );
   
 const SelectField = (props: React.ComponentProps<'select'> & { label: string, options?: string[] }) => (
     <div>
         <label htmlFor={props.name} className="block text-sm font-medium text-secondary">{props.label}</label>
-        <select id={props.name} {...props} className="mt-1 block w-full bg-gray-900 border-gray-700 rounded-md shadow-sm p-2">
+        <select id={props.name} {...props} className="mt-1 block w-full bg-input border-border rounded-md shadow-sm p-2">
             {props.options ? props.options.map(opt => <option key={opt} value={opt}>{opt}</option>) : props.children}
         </select>
     </div>
@@ -399,6 +399,6 @@ const SelectField = (props: React.ComponentProps<'select'> & { label: string, op
 const TextareaField = (props: React.ComponentProps<'textarea'> & { label: string }) => (
     <div>
         <label htmlFor={props.name} className="block text-sm font-medium text-secondary">{props.label}</label>
-        <textarea id={props.name} {...props} rows={2} className="mt-1 block w-full bg-gray-900 border-gray-700 rounded-md shadow-sm p-2" />
+        <textarea id={props.name} {...props} rows={2} className="mt-1 block w-full bg-input border-border rounded-md shadow-sm p-2" />
     </div>
 );
