@@ -39,7 +39,7 @@ const AssociatedListingCard: React.FC<AssociatedListingCardProps> = ({ listing, 
     };
 
     return (
-        <div className="bg-gray-800 rounded-lg p-3 flex flex-col sm:flex-row gap-4">
+        <div className="bg-surface-secondary/50 rounded-lg p-3 flex flex-col sm:flex-row gap-4">
             <img 
               src={listing.imageUrl} 
               alt={listing.title} 
@@ -76,13 +76,13 @@ const AssociatedListingCard: React.FC<AssociatedListingCardProps> = ({ listing, 
                     {isRemarksOpen && (
                         <div className="mt-2 space-y-2">
                             <div className="flex gap-2">
-                                <input type="text" value={newRemark} onChange={(e) => setNewRemark(e.target.value)} placeholder="Ajouter une remarque..." className="flex-grow bg-gray-900 border-gray-700 rounded-md p-1 text-xs" />
+                                <input type="text" value={newRemark} onChange={(e) => setNewRemark(e.target.value)} placeholder="Ajouter une remarque..." className="flex-grow bg-input border-border rounded-md p-1 text-xs" />
                                 <button onClick={handleAddRemark} className="bg-brand text-white px-2 rounded-md text-xs">Ajouter</button>
                             </div>
                             <div className="max-h-24 overflow-y-auto space-y-1 pr-2">
                                 {listing.remarks.map(rem => (
-                                    <div key={rem.id} className="text-xs bg-gray-900 p-1.5 rounded">
-                                        <p className="text-gray-400">{rem.text}</p>
+                                    <div key={rem.id} className="text-xs bg-surface p-1.5 rounded">
+                                        <p className="text-secondary">{rem.text}</p>
                                         <p className="text-gray-500 text-right text-[10px]">{new Date(rem.timestamp).toLocaleDateString()}</p>
                                     </div>
                                 ))}
@@ -182,7 +182,7 @@ const AddListingForm: React.FC<AddListingFormProps> = ({ onAdd }) => {
     };
 
     return (
-        <div className="bg-gray-800/50 p-3 rounded-lg">
+        <div className="bg-surface-secondary/50 p-3 rounded-lg">
             <h4 className="font-semibold text-primary mb-2">Ajouter une annonce via URL</h4>
             <div className="flex flex-col sm:flex-row gap-2">
                 <input 
@@ -190,7 +190,7 @@ const AddListingForm: React.FC<AddListingFormProps> = ({ onAdd }) => {
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder="Collez le lien de l'annonce ici..."
-                    className="flex-grow bg-gray-900 border-gray-700 rounded-md p-2 text-sm"
+                    className="flex-grow bg-input border-border rounded-md p-2 text-sm"
                 />
                 <button onClick={handleAnalyze} disabled={isLoading} className="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-3 rounded-md text-sm flex items-center justify-center gap-2">
                     {isLoading ? (<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>) : <SparklesIcon className="w-4 h-4" />}
@@ -231,7 +231,7 @@ export const AssociatedListingsTab: React.FC<AssociatedListingsTabProps> = ({ co
     return (
         <div className="space-y-4">
             <AddListingForm onAdd={handleAddListing} />
-            <div className="max-h-[26rem] overflow-y-auto space-y-3 bg-gray-900 p-3 rounded-lg">
+            <div className="max-h-[26rem] overflow-y-auto space-y-3 bg-background p-3 rounded-lg">
                 {contact.savedListings.length > 0 ? (
                     contact.savedListings.map(listing => (
                         <AssociatedListingCard 
