@@ -5,15 +5,16 @@ import { ExternalLinkIcon } from '../components/Icons';
 
 const FormattedResponse: React.FC<{ text: string }> = ({ text }) => {
     const formattedParts = text.split(/(\n)/).map((part, index) => {
-        // Match titles (##, ###, etc.)
+        // Match main titles (#)
+        if (part.startsWith('# ')) {
+             return <h1 key={index} className="text-2xl font-bold text-brand mt-6 mb-3 border-b-2 border-brand/50 pb-2">{part.substring(2)}</h1>;
+        }
+        // Match subtitles (##)
         if (part.startsWith('## ')) {
             return <h2 key={index} className="text-xl font-bold text-brand-light mt-4 mb-2">{part.substring(3)}</h2>;
         }
-        if (part.startsWith('# ')) {
-             return <h1 key={index} className="text-2xl font-bold text-brand mt-6 mb-3">{part.substring(2)}</h1>;
-        }
         // Match bold text
-        part = part.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        part = part.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-primary">$1</strong>');
         
         // Match bullet points
         if (part.trim().startsWith('* ') || part.trim().startsWith('- ')) {
@@ -26,11 +27,11 @@ const FormattedResponse: React.FC<{ text: string }> = ({ text }) => {
             return <br key={index} />;
         }
 
-        return <span key={index} dangerouslySetInnerHTML={{ __html: part }} />;
+        return <p key={index} className="my-2" dangerouslySetInnerHTML={{ __html: part }} />;
     });
 
     return (
-        <div className="space-y-2 text-primary leading-relaxed">
+        <div className="space-y-2 text-secondary leading-relaxed">
             {formattedParts}
         </div>
     );
@@ -99,7 +100,7 @@ export const Search: React.FC = () => {
             model: 'gemini-2.5-flash',
             contents: prompt,
             config: {
-                systemInstruction: "Tu es un expert immobilier. Formatte tes réponses en utilisant Markdown pour une meilleure lisibilité (titres, listes, gras).",
+                systemInstruction: "Tu es un expert immobilier. Formatte tes réponses en utilisant Markdown pour une meilleure lisibilité (titres # et ##, listes, gras). Si des chiffres clés sont pertinents, présente-les clairement.",
                 tools: tools,
                 toolConfig: toolConfig,
             },
