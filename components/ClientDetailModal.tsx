@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Contact, Remark, ProjectStatus, FunnelStage, AssociatedDocument, DocumentType, Appointment, VisitReport, SavedAnnonce, ProjectPriority, SavedListing, TimelineEvent, Estimation, ContactType, SearchCriteria, PropertyType, PropertyStyle } from '../types';
 import { Modal } from './Modal';
@@ -428,7 +429,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                     <TabButton name="dossier" activeTab={activeTab} setActiveTab={setActiveTab}>Suivi</TabButton>
                     <TabButton name="criteres" activeTab={activeTab} setActiveTab={setActiveTab}>Critères</TabButton>
                     <TabButton name="annonces" activeTab={activeTab} setActiveTab={setActiveTab}>Annonces ({contact.savedListings.length})</TabButton>
-                    <TabButton name="suivi" activeTab={activeTab} setActiveTab={setActiveTab}>A venir</TabButton>
+                    <TabButton name="suivi" activeTab={activeTab} setActiveTab={setActiveTab}>RDV</TabButton>
                     <TabButton name="estimations" activeTab={activeTab} setActiveTab={setActiveTab}>Estimations</TabButton>
                     <TabButton name="documents" activeTab={activeTab} setActiveTab={setActiveTab}>Documents</TabButton>
                 </nav>
