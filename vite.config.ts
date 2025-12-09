@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/n8n-proxy/, ''),
             secure: false,
+            timeout: 120000, // 2 minutes timeout
           },
         },
       },
