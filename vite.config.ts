@@ -8,20 +8,23 @@ export default defineConfig(({ mode }) => {
     return {
       server: {
         port: 9002,
-        host: '0.0.0.0',
+        host: '0.0.0.0', // This is the correct way to set the host
         proxy: {
             '/n8n-proxy': {
               target: 'https://n8n.wa-master.fr', // Default, will be overridden by header
               changeOrigin: true,
+              proxyTimeout: 120000, // 2 minutes timeout
               rewrite: (path) => path.replace(/^\/n8n-proxy/, ''),
               configure: (proxy, options) => {
                 proxy.on('proxyReq', (proxyReq, req, res) => {
                    if (req.headers['x-n8n-webhook-url']) {
                         const targetUrl = new URL(req.headers['x-n8n-webhook-url'] as string);
                         proxyReq.setHeader('host', targetUrl.hostname);
-                        // Vite's proxy automatically sets the target path,
-                        // so we just need to ensure the rewritten path is correct in the main config.
+                        // The target is dynamically set by the 'host' header,
+                        // so we can leave the main target as a default.
                    }
+                   // The body is not parsed by default on proxied requests, so we need to handle it.
+                   // Based on the 'body-parser' logic inside Vite's dev server.
                    if (req.body) {
                         const bodyData = JSON.stringify(req.body);
                         proxyReq.setHeader('Content-Type', 'application/json');
