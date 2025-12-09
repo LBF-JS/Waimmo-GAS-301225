@@ -344,7 +344,7 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
         };
         
         if (criteria.cities) setLocation(criteria.cities);
-        if (criteria.searchRadiusKm) setRadius(criteria.searchRadiusKm);
+        if (criteria.searchRadiusKm) setRadius(Math.min(criteria.searchRadiusKm, 5));
         
         if (criteria.targetPrice) {
             const margin = criteria.priceMarginPercent || 10;
@@ -696,7 +696,17 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                         </div>
                         <div>
                             <label htmlFor="radius" className="text-xs text-secondary">Rayon (km)</label>
-                            <input type="number" name="radius" id="radius" value={radius} onChange={(e) => setRadius(Number(e.target.value))} min="1" max="5" className="w-24 bg-input p-2 rounded-md border-border" required />
+                            <input 
+                                type="number" 
+                                name="radius" 
+                                id="radius" 
+                                value={radius} 
+                                onChange={(e) => setRadius(Math.min(5, Number(e.target.value)))} 
+                                min="1" 
+                                max="5" 
+                                className="w-24 bg-input p-2 rounded-md border-border" 
+                                required 
+                            />
                         </div>
                         <div className="flex-grow flex justify-end">
                             {!isLoading ? (
@@ -879,3 +889,4 @@ const RadioOption: React.FC<{name: string, value: string, checked: boolean, onCh
         <span>{label}</span>
     </label>
 );
+
