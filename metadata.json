@@ -1,0 +1,9 @@
+{
+  "name": "WaImmo",
+  "description": "Une application CRM complète pour les agents immobiliers pour gérer les prospects, les clients, suivre les dossiers, rechercher des annonces via une intégration n8n simulée, et gérer les rendez-vous.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
