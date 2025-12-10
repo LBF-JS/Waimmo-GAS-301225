@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { WaImmoLogoIcon, EyeIcon, EyeSlashIcon } from '../components/Icons';
+import { WaImmoLogoIcon, EyeIcon, EyeSlashIcon, SparklesIcon, PhoneArrowUpRightIcon, UserGroupIcon } from '../components/Icons';
 
 interface LoginPageProps {
   onLoginSuccess: () => void;
@@ -32,7 +32,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
             <div className="flex items-center justify-center space-x-2 mb-2">
@@ -119,6 +119,48 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           </div>
         </div>
       </div>
+      
+      <div className="mt-12 w-full max-w-4xl text-center px-4">
+        <h2 className="text-2xl font-bold text-primary mb-4">L'assistant IA qui transforme votre prospection</h2>
+        <p className="text-secondary max-w-2xl mx-auto">
+          WaImmo est plus qu'un simple CRM. C'est une plateforme complète conçue pour les agents immobiliers modernes qui veulent gagner du temps, centraliser leurs informations et décupler leur efficacité sur le terrain.
+        </p>
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <FeatureCard
+                icon={<PhoneArrowUpRightIcon className="w-8 h-8 text-brand" />}
+                title="Pige Immobilière Intelligente"
+                description="Notre IA scanne le web pour vous trouver les meilleures opportunités. Définissez vos critères les plus complexes et recevez une liste d'annonces qualifiées avec un score de compatibilité unique."
+            />
+            <FeatureCard
+                icon={<UserGroupIcon className="w-8 h-8 text-brand" />}
+                title="CRM Complet & Intuitif"
+                description="Suivez chaque prospect et client, de la première prise de contact à la signature. Gérez vos rendez-vous, comptes rendus et documents en un seul endroit."
+            />
+            <FeatureCard
+                icon={<SparklesIcon className="w-8 h-8 text-brand" />}
+                title="Assistant Créatif IA"
+                description="Générez des images attractives pour vos annonces et rédigez des descriptions percutantes en quelques clics. L'IA vous assiste pour créer des supports marketing de haute qualité."
+            />
+        </div>
+      </div>
+
+      <footer className="w-full text-center p-8 mt-12 border-t border-border">
+          <div className="flex justify-center items-center gap-4 text-xs">
+              <a href="https://waive.fr" target="_blank" rel="noopener noreferrer" className="bg-brand text-white font-bold py-2 px-4 rounded-md">Créer un compte</a>
+              <a href="/privacy-policy" className="text-secondary hover:text-primary">Politique de confidentialité</a>
+              <a href="/terms-of-use" className="text-secondary hover:text-primary">Conditions d'utilisation</a>
+          </div>
+          <p className="mt-4 text-xs text-secondary">© {new Date().getFullYear()} WaImmo by Waive.fr - Tous droits réservés.</p>
+      </footer>
+
     </div>
   );
 };
+
+const FeatureCard: React.FC<{ icon: React.ReactNode, title: string, description: string }> = ({ icon, title, description }) => (
+    <div className="bg-surface p-6 rounded-lg text-left">
+        <div className="mb-3">{icon}</div>
+        <h3 className="font-bold text-lg text-primary mb-2">{title}</h3>
+        <p className="text-sm text-secondary">{description}</p>
+    </div>
+);
