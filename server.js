@@ -1,40 +1,41 @@
+
 import express from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { createServer } from 'vite';
-import { parse } from 'url';
 
 const port = process.env.PORT || 9002;
 
 async function startServer() {
     const app = express();
 
-    // Proxy for n8n webhook
+    // Proxy pour le webhook n8n
     app.use('/n8n-proxy', createProxyMiddleware({
-        target: 'http://localhost:9002', // Placeholder target
+        target: 'http://localhost:9002', // Cible temporaire, sera remplacée par le router
         changeOrigin: true,
         proxyTimeout: 120000, // 2 minutes
         router: (req) => {
-            const webhookUrl = req.headers['x-n8n-webhook-url'];
+            const webhookUrl = req.headers['x-n8n-webhook-url'] as string;
             if (webhookUrl) {
                 return webhookUrl;
             }
             throw new Error('X-N8N-Webhook-Url header is missing');
         },
         pathRewrite: {
-            '^/n8n-proxy': '',
+            '^/n8n-proxy': '', // Supprime /n8n-proxy du chemin
         },
-        logLevel: 'debug'
+        logLevel: 'debug',
     }));
 
-    // Create Vite server in middleware mode
+    // Crée un serveur Vite en mode middleware
     const vite = await createServer({
         server: { middlewareMode: true },
-        appType: 'spa',
+        appType: 'spa', // Important pour les Single Page Applications
     });
 
-    // Use vite's connect instance as middleware
+    // Utilise les middlewares de Vite pour servir les fichiers de l'application
     app.use(vite.middlewares);
-    
+
+    // Démarrage du serveur Express
     app.listen(port, '0.0.0.0', () => {
         console.log(`Server listening on http://localhost:${port}`);
     });
