@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 // FIX: Import 'GroundingChunk' type to resolve the "Cannot find name" error.
 import { GoogleGenAI, type GroundingChunk } from '@google/genai';
