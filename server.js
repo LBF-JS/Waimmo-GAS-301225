@@ -1,12 +1,13 @@
 import express from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { createServer as createViteServer } from 'vite';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function createServer() {
   const app = express();
-
-  // Middleware to parse JSON bodies, required for the proxy to work correctly
-  app.use(express.json());
 
   // Proxy for n8n webhook
   app.use('/n8n-proxy', createProxyMiddleware({
@@ -23,7 +24,6 @@ async function createServer() {
         '^/n8n-proxy': '' // remove /n8n-proxy from the forwarded path
     },
     onProxyReq: (proxyReq, req, res) => {
-      // n8n expects the body, so we need to make sure it's passed through
       if (req.body) {
         const bodyData = JSON.stringify(req.body);
         proxyReq.setHeader('Content-Type', 'application/json');
@@ -38,11 +38,16 @@ async function createServer() {
   // Create Vite server in middleware mode
   const vite = await createViteServer({
     server: { middlewareMode: true },
-    appType: 'spa'
+    appType: 'spa',
+    root: __dirname, // Set the root to the current directory
   });
 
   // Use vite's connect instance as middleware for all other requests
   app.use(vite.middlewares);
+
+  app.use('*', (req, res, next) => {
+      res.sendFile(path.join(__dirname, 'index.html'));
+  });
 
   const port = process.env.PORT || 9002;
   app.listen(port, '0.0.0.0', () => {
