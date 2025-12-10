@@ -1,31 +1,30 @@
 
 
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 // FIX: Import 'GroundingChunk' type to resolve the "Cannot find name" error.
-import { GoogleGenAI, type GroundingChunk } from '@google/genai';
-import { ExternalLinkIcon, HomeIcon, PhoneArrowUpRightIcon, StarIcon, MapPinIcon, SparklesIcon, PlusIcon, TrashIcon, XCircleIcon, InformationCircleIcon } from '../components/Icons';
+import { GoogleGenerAI, type GroundingChunk } from '@google/genai';
+import { ExternalLinkIcon, HomeIcon, PhoneArrowUpRightIcon, StarIcon, MapPinIcon, SparklesIcon, PlusIcon, TrashIcon, XCircleIcon, InformationCircleIcon, ClockIcon, CheckCircleIcon } from '../components/Icons';
 import { PROPERTY_TYPE_OPTIONS } from '../constants';
 import { Modal } from '../components/Modal';
 import { AudioTranscriber } from '../components/AudioTranscriber';
-import { Contact, Criterion, Columns, ColumnId, SavedListing, ListingStatus, PigeResult } from '../types';
+import { Contact, Criterion, Columns, ColumnId, SavedListing, ListingStatus, PigeResult as PigeResultData, PigeAnnonce, PigeAgenceStat } from '../types';
 
 
 type SearchType = 'listings' | 'agencies';
 
 
 // --- N8N WORKFLOW SIMULATION ---
-const triggerN8nWebhook = async (webhookUrl: string, payload: any): Promise<PigeResult[]> => {
+const triggerN8nWebhook = async (webhookUrl: string, payload: any): Promise<{ recherche_id: string }> => {
     if (!webhookUrl) {
         throw new Error("L'URL du webhook n8n n'est pas configurée. Veuillez l'ajouter dans la page des paramètres.");
     }
 
-    // The fetch call now goes to the local server, which will proxy the request to the n8n webhook URL.
-    // The actual webhook URL is passed in a header for the server to use.
     const response = await fetch('/n8n-proxy', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-N8N-Webhook-Url': webhookUrl, // Pass the real webhook URL in a header
+            'X-N8N-Webhook-Url': webhookUrl, 
         },
         body: JSON.stringify(payload),
     });
@@ -35,26 +34,12 @@ const triggerN8nWebhook = async (webhookUrl: string, payload: any): Promise<Pige
         throw new Error(`Erreur du webhook n8n: ${response.status} ${response.statusText}. Réponse: ${errorText}`);
     }
 
-    const results = await response.json();
-
-    if (!Array.isArray(results)) {
-        console.error("La réponse du webhook n'est pas un tableau:", results);
-        throw new Error("Le format de la réponse du webhook n8n est incorrect. Un tableau de résultats est attendu.");
+    // n8n now returns an object with a recherche_id
+    const result = await response.json();
+    if (!result.recherche_id) {
+         throw new Error("La réponse du webhook n'a pas retourné de 'recherche_id'.");
     }
-
-    return results.map((item, index) => ({
-        id: item.id || `n8n-res-${Date.now()}-${index}`,
-        title: item.title || 'Sans titre',
-        description: item.description || '',
-        link: item.link,
-        price: item.price,
-        imageUrl: item.imageUrl,
-        source: item.source || 'n8n',
-        agencyName: item.agencyName,
-        latitude: item.latitude,
-        longitude: item.longitude,
-        score: item.score,
-    }));
+    return result;
 };
 
 
@@ -161,77 +146,54 @@ const DropColumn: React.FC<{
     );
 };
 
-const ResultCard: React.FC<{
-    result: PigeResult;
-    isSelected: boolean;
-    onSelect: (resultId: string) => void;
-}> = ({ result, isSelected, onSelect }) => {
-    
-    const getScoreColor = (score?: number) => {
-        if (!score) return 'from-gray-400 to-gray-500';
-        if (score > 85) return 'from-teal-400 to-cyan-500';
-        if (score > 70) return 'from-green-400 to-blue-500';
-        if (score > 50) return 'from-yellow-400 to-orange-500';
-        return 'from-red-400 to-pink-500';
-    };
+const ResultAnnonceCard: React.FC<{
+    annonce: PigeAnnonce;
+}> = ({ annonce }) => {
     
     return (
-        <div 
-            className={`bg-surface rounded-lg shadow-lg overflow-hidden flex flex-col h-full transform hover:scale-105 transition-transform duration-300 relative cursor-pointer ${isSelected ? 'ring-2 ring-brand' : ''}`}
-            onClick={() => onSelect(result.id)}
-        >
-            <div className="absolute top-2 left-2 z-20">
-                <input 
-                    type="checkbox"
-                    checked={isSelected}
-                    readOnly
-                    className="h-5 w-5 rounded text-brand bg-surface/50 border-border focus:ring-brand"
-                />
-            </div>
-            
-            <a href={result.link} target="_blank" rel="noopener noreferrer" className="block relative" onClick={(e) => e.stopPropagation()}>
-                <img 
-                    src={result.imageUrl || 'https://via.placeholder.com/400x300.png?text=Image+non+disponible'} 
-                    alt={result.title} 
-                    className="w-full h-48 object-cover" 
-                    onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/400x300.png?text=Image+invalide'; }}
-                />
-                {result.source && (
-                    <span className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                        {result.source}
-                    </span>
-                )}
-            </a>
+        <div className="bg-surface rounded-lg shadow-lg overflow-hidden flex flex-col h-full transform transition-transform duration-300 relative">
             <div className="p-4 flex flex-col flex-grow">
-                <h3 className="text-md font-bold text-primary truncate flex-grow" title={result.title}>{result.title}</h3>
+                <div className="flex justify-between items-start gap-4">
+                    <h3 className="text-md font-bold text-primary flex-grow" title={annonce.titre}>{annonce.titre}</h3>
+                    <div className="flex-shrink-0 text-lg font-semibold text-accent font-lato">
+                        {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(annonce.prix)}
+                    </div>
+                </div>
 
-                {result.agencyName && (
-                  <div className="flex items-center gap-1.5 text-xs text-secondary mt-1">
-                    <HomeIcon className="w-3 h-3"/>
-                    <span>{result.agencyName}</span>
-                  </div>
-                )}
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-secondary my-2">
+                    <span>{annonce.nb_pieces} pièces</span>
+                    <span>{annonce.nb_chambres} chambres</span>
+                    <span>{annonce.surface_m2} m²</span>
+                    <span>{annonce.localisation}</span>
+                </div>
                 
-                {result.price && <p className="text-lg font-semibold text-accent my-1 font-lato">{result.price}</p>}
-
-                {result.score !== undefined && (
-                  <div className="mt-3" title={`Score de compatibilité : ${result.score}%`}>
+                 <div className="mt-3" title={`Score de compatibilité : ${annonce.score_compatibilite}%`}>
                      <div className="flex justify-between items-center mb-1">
                         <span className="text-xs font-medium text-secondary">Compatibilité</span>
-                        <span className="text-primary font-semibold text-xs">{result.score}%</span>
+                        <span className="text-primary font-semibold text-xs">{annonce.score_compatibilite}%</span>
                     </div>
                     <div className="w-full bg-surface-secondary rounded-full h-2">
                         <div 
-                            className={`bg-gradient-to-r ${getScoreColor(result.score)} h-2 rounded-full`}
-                            style={{ width: `${result.score}%` }}
+                            className="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full"
+                            style={{ width: `${annonce.score_compatibilite}%` }}
                         ></div>
                     </div>
                   </div>
-                )}
+
+                <div className="text-xs mt-3 space-y-1">
+                    <p className="font-semibold text-primary">Critères remplis :</p>
+                    <div className="flex flex-wrap gap-1">
+                        {annonce.criteres_matches.map(c => <span key={c} className="bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded text-[10px]">{c}</span>)}
+                    </div>
+                    <p className="font-semibold text-primary mt-1">Critères manquants :</p>
+                    <div className="flex flex-wrap gap-1">
+                        {annonce.criteres_manquants.map(c => <span key={c} className="bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded text-[10px]">{c}</span>)}
+                    </div>
+                </div>
             </div>
-             <div className="p-4 pt-0">
+             <div className="p-4 pt-2">
                 <a 
-                    href={result.link} 
+                    href={annonce.url_annonce} 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="w-full inline-flex items-center justify-center text-sm text-white bg-brand hover:bg-brand-dark transition-colors py-2 px-4 rounded-md font-semibold"
@@ -241,26 +203,6 @@ const ResultCard: React.FC<{
                 </a>
             </div>
         </div>
-    );
-};
-
-const AgencyResultCard: React.FC<{result: PigeResult}> = ({ result }) => {
-    return (
-        <a href={result.link} target="_blank" rel="noopener noreferrer" className="block bg-surface rounded-lg shadow-lg overflow-hidden flex flex-col h-full transform hover:scale-105 transition-transform duration-300 p-4">
-            <h3 className="text-md font-bold text-primary truncate flex-grow" title={result.title}>{result.title}</h3>
-            <p className="text-sm text-secondary mt-2 truncate">{result.description}</p>
-            <div className="mt-4 flex justify-between items-center text-xs text-secondary">
-                {result.rating && (
-                    <div className="flex items-center gap-1">
-                        <StarIcon className="w-4 h-4 text-yellow-400" />
-                        <span className="font-semibold">{result.rating}</span>
-                    </div>
-                )}
-                {result.listingCount && (
-                    <span>{result.listingCount} annonces</span>
-                )}
-            </div>
-        </a>
     );
 };
 
@@ -289,8 +231,13 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
 
     const {
         searchType, location, radius, availableCriteria, columns, freeTextInput, 
-        isLoading, error, results, coordinates, selectedContactId, selectedResultIds
+        isLoading, error, results, coordinates, selectedContactId
     } = pigeState;
+    
+    // New state for async flow
+    const [currentSearchId, setCurrentSearchId] = useState<string | null>(null);
+    const [pigeResult, setPigeResult] = useState<PigeResultData | null>(null);
+    const pollingIntervalRef = useRef<number | null>(null);
 
     const setState = (updater: (prevState: any) => any) => {
         setPigeState(updater(pigeState));
@@ -300,34 +247,68 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
 
     const [isLocating, setIsLocating] = useState(false);
     const [locationError, setLocationError] = useState<string | null>(null);
-    
-    const [isAssociateModalOpen, setIsAssociateModalOpen] = useState(false);
-    
-    const searchCancelledRef = useRef(false);
-    
+
+    const stopPolling = () => {
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+        }
+    };
+
     useEffect(() => {
-        // This will cancel any ongoing fetch when the component unmounts
+        // Cleanup on unmount
         return () => {
-            searchCancelledRef.current = true;
+            stopPolling();
         };
     }, []);
+
+    const pollForResults = useCallback((rechercheId: string) => {
+        stopPolling(); // Stop any previous polling
+
+        pollingIntervalRef.current = window.setInterval(async () => {
+            try {
+                const res = await fetch(`/api/pige-results/${rechercheId}`);
+                if (res.ok) {
+                    const resultData: PigeResultData = await res.json();
+                    setPigeResult(resultData);
+                    setState((s: any) => ({ ...s, isLoading: false }));
+                    stopPolling();
+                }
+                // If 404, we just continue polling
+            } catch (err) {
+                console.error("Polling error:", err);
+                // Optionally handle polling errors, e.g., stop after too many failures
+            }
+        }, 30000); // Poll every 30 seconds
+
+        // Set a timeout to stop polling after 15 minutes
+        setTimeout(() => {
+            if (pollingIntervalRef.current) {
+                stopPolling();
+                if (!pigeResult) {
+                     setState((s: any) => ({ ...s, isLoading: false, error: "La recherche a pris plus de 15 minutes et a été interrompue." }));
+                }
+            }
+        }, 15 * 60 * 1000);
+    }, [pigeState]);
+    
 
     const handleLoadCriteriaFromContact = (contactId: string) => {
         setState((s: any) => ({ ...s, selectedContactId: contactId }));
         const contact = contacts.find(c => c.id === contactId);
 
-        if (!contact || !contact.searchCriteria) {
+        if (!contact) {
             setState((s: any) => ({
                 ...s,
                 columns: { essentials: [], importants: [], secondaries: [] },
                 availableCriteria: JSON.parse(JSON.stringify(INITIAL_CRITERIA)),
-                location: 'Toulouse, France',
+                location: '',
                 radius: 5,
             }));
             return;
         }
 
-        const criteria = contact.searchCriteria;
+        const criteria = contact.searchCriteria || {};
         const available = JSON.parse(JSON.stringify(INITIAL_CRITERIA));
         const newColumns: Columns = { essentials: [], importants: [], secondaries: [] };
 
@@ -400,7 +381,6 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
 
         setState((s: any) => ({ ...s, availableCriteria: available, columns: newColumns }));
     };
-
     
     const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetColumnId: ColumnId | 'available') => {
         const criterionId = e.dataTransfer.getData('criterionId');
@@ -514,145 +494,33 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
     };
     
     const handleCancel = () => {
-        searchCancelledRef.current = true;
-        setState((s: any) => ({ ...s, isLoading: false }));
+        stopPolling();
+        setState((s: any) => ({ ...s, isLoading: false, currentSearchId: null, pigeResult: null }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        searchCancelledRef.current = false;
-        setState((s: any) => ({ ...s, isLoading: true, error: null, results: [], selectedResultIds: [] }));
+        setState((s: any) => ({ ...s, isLoading: true, error: null, pigeResult: null, currentSearchId: null }));
 
         try {
-            if (searchType === 'listings') {
-                const payload = {
-                    location,
-                    radius,
-                    primordiaux: columns.essentials.map(formatCriterionForN8n),
-                    importants: columns.importants.map(formatCriterionForN8n),
-                    bonus: columns.secondaries.map(formatCriterionForN8n)
-                };
-                const n8nResults = await triggerN8nWebhook(n8nWebhookUrl, payload);
-                if (searchCancelledRef.current) return;
-                setState((s: any) => ({ ...s, results: n8nResults }));
-            } else { // 'agencies' search
-                const prompt = `**ROLE**: Tu es un robot d'indexation web spécialisé dans l'annuaire d'entreprises.
-                **TA MISSION**: Utilise tes outils de recherche web et de cartographie pour trouver des agences immobilières dans un rayon de ${radius}km autour de "${location}".
-                **FORMAT DE SORTIE OBLIGATOIRE**: Ta réponse DOIT être UNIQUEMENT un tableau JSON valide (formaté comme une chaîne de caractères pure) avec les clés: "title", "description", "rating", "listingCount", "link", "latitude", "longitude". Si une information n'est pas disponible, utilise 'null'.
-                **COMMENCE TA RÉPONSE DIRECTEMENT AVEC LE CARACTÈRE '['.**`;
-                
-                const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-                const config: any = { tools: [{ googleSearch: {} }, { googleMaps: {} }] };
-                if (coordinates) {
-                    config.toolConfig = { retrievalConfig: { latLng: coordinates } };
-                }
-                
-                const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: config });
-                if (searchCancelledRef.current) return;
+            const payload = {
+                location,
+                radius,
+                callback_url: `${window.location.origin}/api/pige-results`,
+                primordiaux: columns.essentials.map(formatCriterionForN8n),
+                importants: columns.importants.map(formatCriterionForN8n),
+                bonus: columns.secondaries.map(formatCriterionForN8n)
+            };
+            const { recherche_id } = await triggerN8nWebhook(n8nWebhookUrl, payload);
+            setCurrentSearchId(recherche_id);
+            pollForResults(recherche_id);
 
-                const parsedResults = parseGeminiResponse(response.text);
-                 setState((s: any) => ({ ...s, results: parsedResults }));
-            }
         } catch (err: any) {
-            if (searchCancelledRef.current) return;
             console.error(err);
-            setState((s: any) => ({ ...s, error: "Une erreur est survenue lors de la recherche. Détails: " + err.message }));
-        } finally {
-            if (!searchCancelledRef.current) setState((s: any) => ({ ...s, isLoading: false }));
+            setState((s: any) => ({ ...s, isLoading: false, error: "Une erreur est survenue lors du lancement de la recherche. Détails: " + err.message }));
         }
     };
     
-    const parseGeminiResponse = (text: string): PigeResult[] => {
-        try {
-            let jsonString = text.trim();
-            if (jsonString.startsWith('```json')) {
-                jsonString = jsonString.substring(7, jsonString.length - 3).trim();
-            } else if (jsonString.startsWith('```')) {
-                 jsonString = jsonString.substring(3, jsonString.length - 3).trim();
-            }
-            
-            const items: any[] = JSON.parse(jsonString);
-
-            if (!Array.isArray(items)) {
-                throw new Error("La réponse de l'IA n'est pas un tableau.");
-            }
-            
-            return items.map((item, index) => ({
-                id: `res-${Date.now()}-${index}`,
-                title: item.title || 'Sans titre',
-                description: item.description || '',
-                link: item.link,
-                rating: item.rating,
-                listingCount: item.listingCount,
-                score: item.score,
-                price: item.price,
-                imageUrl: item.imageUrl,
-                source: item.source,
-                agencyName: item.agencyName,
-                latitude: item.latitude,
-                longitude: item.longitude,
-            }));
-        } catch (e: any) {
-            console.error("Failed to parse JSON response:", e, "Raw text:", text);
-            setState((s: any) => ({...s, error: `Failed to parse JSON response:\n${e.message}` }));
-            return [];
-        }
-    };
-
-    const handleSelectResult = (resultId: string) => {
-        setState((s: any) => ({
-            ...s,
-            selectedResultIds: s.selectedResultIds.includes(resultId)
-                ? s.selectedResultIds.filter((id: string) => id !== resultId)
-                : [...s.selectedResultIds, resultId]
-        }));
-    };
-
-    const handleAssociateListings = (contactId: string) => {
-        const contact = contacts.find(c => c.id === contactId);
-        if (!contact) return;
-
-        const selectedResults = results.filter(r => selectedResultIds.includes(r.id));
-        
-        const newListings: SavedListing[] = selectedResults.map(result => ({
-            id: `listing-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            contactId: contact.id,
-            savedDate: new Date(),
-            status: ListingStatus.Nouveau,
-            remarks: [],
-            title: result.title,
-            price: result.price || 'N/P',
-            link: result.link || '#',
-            imageUrl: result.imageUrl || '',
-            source: result.agencyName || result.source || 'Pige IA',
-            description: result.description,
-        }));
-
-        const updatedContact: Contact = {
-            ...contact,
-            savedListings: [...newListings, ...contact.savedListings],
-            lastUpdateDate: new Date(),
-        };
-
-        onUpdateContact(updatedContact);
-        
-        alert(`${newListings.length} annonce(s) ajoutée(s) au dossier de ${contact.firstName} ${contact.lastName}.`);
-        setState((s: any) => ({ ...s, selectedResultIds: [] }));
-    };
-
-    const handleOpenAssociateModal = () => {
-        const activeContacts = contacts.filter(c => c.projectStatus !== 'Terminé' && c.projectStatus !== 'Perdu');
-        if (activeContacts.length === 0) {
-            alert("Aucun contact actif à qui associer ces annonces.");
-            return;
-        }
-        setIsAssociateModalOpen(true);
-    };
-
-    const handleConfirmAssociation = (contactId: string) => {
-        handleAssociateListings(contactId);
-        setIsAssociateModalOpen(false);
-    };
 
     const handleFieldChange = (field: string, value: any) => {
         setState((s: any) => ({ ...s, [field]: value }));
@@ -685,9 +553,9 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                                 name="radius" 
                                 id="radius" 
                                 value={radius} 
-                                onChange={(e) => handleFieldChange('radius', Math.min(5, Number(e.target.value)))} 
+                                onChange={(e) => handleFieldChange('radius', Math.min(50, Number(e.target.value)))} // Increased max radius
                                 min="1" 
-                                max="5" 
+                                max="50" 
                                 className="w-24 bg-input p-2 rounded-md border-border" 
                                 required 
                             />
@@ -700,7 +568,7 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                                 </button>
                             ) : (
                                 <button type="button" onClick={handleCancel} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors">
-                                    Arrêter
+                                    Annuler
                                 </button>
                             )}
                         </div>
@@ -711,21 +579,26 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                     </div>
                     {searchType === 'listings' && (
                         <div className="pt-3 mt-2 border-t border-border animate-fade-in">
-                             <div className="bg-surface-secondary p-3 rounded-lg mb-4 flex items-center gap-4">
+                            <div className="bg-surface-secondary p-3 rounded-lg mb-4 flex items-center gap-4">
                                 <label htmlFor="contact-criteria-loader" className="text-sm font-medium text-secondary flex-shrink-0">
                                     Reprendre les critères de :
                                 </label>
-                                <select 
-                                    id="contact-criteria-loader"
-                                    value={selectedContactId}
-                                    onChange={(e) => handleLoadCriteriaFromContact(e.target.value)}
-                                    className="flex-grow bg-input border-border rounded-md p-2 text-sm"
-                                >
-                                    <option value="">-- Sélectionner un contact --</option>
-                                    {contacts.filter(c => c.searchCriteria).map(c => (
-                                        <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
-                                    ))}
-                                </select>
+                                <div className="flex-grow relative">
+                                    <select 
+                                        id="contact-criteria-loader"
+                                        value={selectedContactId}
+                                        onChange={(e) => handleLoadCriteriaFromContact(e.target.value)}
+                                        className="w-full bg-input border-border rounded-md p-2 text-sm appearance-none"
+                                    >
+                                        <option value="">-- Sélectionner un contact --</option>
+                                        {contacts.filter(c => c.searchCriteria).map(c => (
+                                            <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
+                                        ))}
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-secondary">
+                                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                    </div>
+                                </div>
                                 {selectedContactId && (
                                     <button 
                                         type="button" 
@@ -800,72 +673,45 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                      <div className="flex h-full flex-col items-center justify-center text-center p-10 bg-surface rounded-lg">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mb-4"></div>
                         <p className="text-secondary font-semibold">Recherche en cours...</p>
-                        <p className="text-sm text-gray-500">{searchType === 'listings' ? "Déclenchement du workflow n8n..." : "Analyse IA des agences..."}</p>
+                        <p className="text-sm text-gray-500">Le workflow n8n a été déclenché. Les résultats apparaîtront ici d'ici 5 à 10 minutes.</p>
+                        <p className="text-xs text-gray-600 mt-2">(Vous pouvez quitter cette page et revenir plus tard)</p>
                     </div>
                 )}
                 {error && <div className="p-4 bg-red-900/50 border border-red-700 rounded-lg text-red-300"><h4 className="font-bold">Erreur</h4><pre className="whitespace-pre-wrap text-xs">{error}</pre></div>}
                 
-                {results.length > 0 && (
+                {pigeResult && (
                     <div className="bg-surface rounded-lg shadow-lg animate-fade-in">
-                        <div className="p-4 border-b border-border flex justify-between items-center">
-                            <h3 className="font-semibold text-primary">
-                                Résultats de la pige ({results.length})
-                                {searchType === 'listings' && <span className="ml-2 text-xs bg-blue-500/30 text-blue-300 px-2 py-1 rounded-full">via Workflow n8n</span>}
-                            </h3>
+                        <div className="p-4 border-b border-border">
+                             <div className="flex justify-between items-center">
+                                <h3 className="font-semibold text-primary">Résultats de la pige (Recherche ID: {pigeResult.data.payload.recherche_id})</h3>
+                                <p className="text-xs text-secondary">Reçu le {new Date(pigeResult.receivedAt).toLocaleString('fr-FR')}</p>
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-sm text-secondary">
+                                <StatItem label="Agences Scannées" value={pigeResult.data.payload.stats.agences_scrapees} />
+                                <StatItem label="Annonces Trouvées" value={pigeResult.data.payload.stats.annonces_trouvees_total} />
+                                <StatItem label="Annonces Uniques" value={pigeResult.data.payload.stats.annonces_apres_deduplication} />
+                                <StatItem label="Doublons Supprimés" value={pigeResult.data.payload.stats.doublons_supprimes} />
+                            </div>
                         </div>
 
                        <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                         {results.map((res) => (
-                           <div key={res.id}>
-                                {searchType === 'listings' ? (
-                                    <ResultCard 
-                                        result={res} 
-                                        isSelected={selectedResultIds.includes(res.id)}
-                                        onSelect={handleSelectResult}
-                                    />
-                                ) : (
-                                    <AgencyResultCard result={res} />
-                                )}
-                           </div>
+                         {pigeResult.data.payload.annonces.sort((a,b) => b.score_compatibilite - a.score_compatibilite).map((annonce, index) => (
+                           <ResultAnnonceCard key={annonce.url_annonce || index} annonce={annonce} />
                          ))}
                        </div>
                     </div>
                 )}
-                 {selectedResultIds.length > 0 && (
-                    <div className="sticky bottom-6 z-20 w-full flex justify-center animate-fade-in-up">
-                        <div className="bg-surface shadow-lg rounded-lg p-3 flex items-center gap-4 border border-border">
-                            <span className="text-sm font-semibold">{selectedResultIds.length} annonce(s) sélectionnée(s)</span>
-                            <button onClick={handleOpenAssociateModal} className="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-md">
-                                Associer à un contact...
-                            </button>
-                            <button onClick={() => setState((s:any) => ({...s, selectedResultIds:[]}))} className="p-2 text-secondary hover:text-primary" title="Désélectionner tout">
-                                <XCircleIcon className="w-5 h-5" />
-                            </button>
-                        </div>
-                    </div>
-                )}
             </div>
-
-            <Modal isOpen={isAssociateModalOpen} onClose={() => setIsAssociateModalOpen(false)} title={`Associer ${selectedResultIds.length} annonce(s)`}>
-                <div className="space-y-4">
-                    <p>Sélectionnez le contact auquel vous souhaitez ajouter ces annonces :</p>
-                    <div className="max-h-60 overflow-y-auto space-y-2">
-                        {contacts.filter(c => c.projectStatus !== 'Terminé' && c.projectStatus !== 'Perdu').map(contact => (
-                            <button 
-                                key={contact.id} 
-                                onClick={() => handleConfirmAssociation(contact.id)}
-                                className="w-full text-left p-3 bg-surface-secondary hover:bg-opacity-80 rounded-md transition-colors"
-                            >
-                                <span className="font-semibold text-primary">{contact.firstName} {contact.lastName}</span>
-                                <span className="text-sm text-secondary block">{contact.contactType}</span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </Modal>
         </div>
     );
 };
+
+const StatItem: React.FC<{label: string, value: number}> = ({label, value}) => (
+    <div className="flex items-center gap-2">
+        <span className="font-semibold text-primary">{value}</span>
+        <span className="text-secondary">{label}</span>
+    </div>
+);
 
 const RadioOption: React.FC<{name: string, value: string, checked: boolean, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, label: string}> = ({ name, value, checked, onChange, label }) => (
     <label className={`flex items-center space-x-2 px-3 py-1.5 rounded-md cursor-pointer transition-colors text-sm font-medium ${checked ? 'bg-brand text-white' : 'hover:bg-surface'}`}>

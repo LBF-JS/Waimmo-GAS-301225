@@ -445,8 +445,60 @@ export interface Estimation {
     estimationDate: Date;
 }
 
-// Pige Page Types
+// --- Pige IA - Asynchronous Workflow Types ---
+
+// Annonce format received from n8n callback
+export interface PigeAnnonce {
+    titre: string;
+    prix: number;
+    surface_m2: number;
+    nb_pieces: number;
+    nb_chambres: number;
+    localisation: string;
+    description_courte: string;
+    url_annonce: string;
+    score_compatibilite: number;
+    criteres_matches: string[];
+    criteres_manquants: string[];
+    source_agence: string;
+    source_site: string;
+    // Added for display consistency
+    id?: string; 
+    imageUrl?: string;
+}
+
+// Agency stats format received from n8n
+export interface PigeAgenceStat {
+    nom: string;
+    site: string;
+    annonces_trouvees: number;
+}
+
+// Main payload format from n8n callback
+export interface PigePayload {
+    recherche_id: string;
+    timestamp: string;
+    stats: {
+        agences_scrapees: number;
+        annonces_trouvees_total: number;
+        annonces_apres_deduplication: number;
+        doublons_supprimes: number;
+    };
+    agences: PigeAgenceStat[];
+    annonces: PigeAnnonce[];
+}
+
+// Wrapper for the data stored in the frontend
 export interface PigeResult {
+    receivedAt: string;
+    data: {
+        callback_url: string;
+        payload: PigePayload;
+    }
+}
+
+// Legacy Pige types (can be removed if no longer used by synchronous flow)
+export interface PigeResultLegacy {
     id: string;
     title: string;
     description: string;
@@ -461,6 +513,9 @@ export interface PigeResult {
     latitude?: number;
     longitude?: number;
 }
+
+
+// --- Generic Criterion Types for Search Builder ---
 
 export interface Criterion {
     id: string;
@@ -477,5 +532,3 @@ export interface Columns {
     importants: Criterion[];
     secondaries: Criterion[];
 }
-
-    
