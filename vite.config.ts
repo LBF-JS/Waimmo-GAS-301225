@@ -6,7 +6,10 @@ import isoImport from 'vite-plugin-iso-import';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
+      // Ignorer les options inconnues passées en ligne de commande (comme --hostname)
+      allowUnknownFlags: true,
       server: {
+        host: '0.0.0.0', // S'assurer que Vite écoute sur la bonne interface
         proxy: {
           // Proxy les requêtes de /n8n-proxy vers l'URL du webhook n8n
           '/n8n-proxy': {
