@@ -24,6 +24,8 @@ import { SettingsPage } from './pages/SettingsPage';
 import { EstimationPage } from './pages/EstimationPage';
 import { SavedListingsPage } from './pages/SavedListingsPage';
 import { LoginPage } from './pages/LoginPage';
+import { MandatsPage } from './pages/MandatsPage';
+import { MandateTrackingPage } from './pages/MandateTrackingPage';
 
 
 // Import Components
@@ -38,7 +40,7 @@ import {
     HomeIcon, UserGroupIcon, MagnifyingGlassIcon, CalendarDaysIcon, 
     DocumentChartBarIcon, Cog6ToothIcon, BellIcon,
     PhotoIcon, BookmarkSquareIcon, DocumentTextIcon, PhoneArrowUpRightIcon, CalculatorIcon,
-    ArrowRightOnRectangleIcon, WaImmoLogoIcon
+    ArrowRightOnRectangleIcon, WaImmoLogoIcon, DocumentCheckIcon, Squares2X2Icon
 } from './components/Icons';
 
 // --- MOCK DATA ---
@@ -47,7 +49,7 @@ import { initialAgentInfo, initialContacts, initialAppointments, initialReports,
 // --- TYPES ---
 type Page = 
     'home' | 'dashboard' | 'search' | 'pige' | 'calendar' | 'reports' | 'estimation' |
-    'image-editor' | 'mes-annonces' | 'saved-listings' | 'history' | 'settings';
+    'image-editor' | 'mes-annonces' | 'saved-listings' | 'history' | 'settings' | 'mandats' | 'mandate-tracking';
     
 type Theme = 'light' | 'dark';
 
@@ -64,6 +66,8 @@ const pageTitles: Record<Page, string> = {
     'saved-listings': "Annonces Enregistrées",
     history: "Historique des Dossiers",
     settings: "Paramètres",
+    mandats: "Gestion des Mandats",
+    "mandate-tracking": "Suivi des Mandats"
 };
 
 // --- MAIN APP COMPONENT ---
@@ -371,6 +375,8 @@ const App = () => {
             case 'saved-listings': return <SavedListingsPage contacts={contacts} onUpdateContact={handleUpdateContact} onSelectContact={handleSelectContact} />;
             case 'history': return <History contacts={contacts.filter(c => c.projectStatus === ProjectStatus.Termine || c.projectStatus === ProjectStatus.Perdu)} onSelectContact={handleSelectContact} />;
             case 'settings': return <SettingsPage agentInfo={agentInfo} onUpdateAgentInfo={handleUpdateAgentInfo} notificationSettings={notificationSettings} onUpdateNotificationSettings={handleUpdateNotificationSettings} theme={theme} setTheme={setTheme} n8nWebhookUrl={n8nWebhookUrl} onUpdateN8nWebhookUrl={handleUpdateN8nWebhookUrl} />;
+            case 'mandats': return <MandatsPage mandates={mandates} contacts={contacts} onAddMandate={handleAddMandate} onUpdateMandate={handleUpdateMandate} onDeleteMandate={handleDeleteMandate} onSelectContact={handleSelectContact} onUpdateContact={handleUpdateContact} agentInfo={agentInfo}/>;
+            case 'mandate-tracking': return <MandateTrackingPage mandates={mandates} contacts={contacts} />;
             default: return <HomePage contacts={contacts} appointments={appointments} onSelectContact={handleSelectContact} />;
         }
     };
