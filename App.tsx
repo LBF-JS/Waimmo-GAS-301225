@@ -22,8 +22,6 @@ import { MesAnnoncesPage } from './pages/MesAnnoncesPage';
 import { History } from './pages/History';
 import { SettingsPage } from './pages/SettingsPage';
 import { EstimationPage } from './pages/EstimationPage';
-import { MandatsPage } from './pages/MandatsPage';
-import { MandateTrackingPage } from './pages/MandateTrackingPage';
 import { SavedListingsPage } from './pages/SavedListingsPage';
 import { LoginPage } from './pages/LoginPage';
 
@@ -39,7 +37,7 @@ import { NotificationsPanel } from './components/NotificationsPanel';
 import { 
     HomeIcon, UserGroupIcon, MagnifyingGlassIcon, CalendarDaysIcon, 
     DocumentChartBarIcon, Cog6ToothIcon, BellIcon,
-    PhotoIcon, BookmarkSquareIcon, DocumentTextIcon, PhoneArrowUpRightIcon, CalculatorIcon, DocumentCheckIcon,
+    PhotoIcon, BookmarkSquareIcon, DocumentTextIcon, PhoneArrowUpRightIcon, CalculatorIcon,
     ArrowRightOnRectangleIcon, WaImmoLogoIcon
 } from './components/Icons';
 
@@ -49,7 +47,7 @@ import { initialAgentInfo, initialContacts, initialAppointments, initialReports,
 // --- TYPES ---
 type Page = 
     'home' | 'dashboard' | 'search' | 'pige' | 'calendar' | 'reports' | 'estimation' |
-    'image-editor' | 'mes-annonces' | 'saved-listings' | 'history' | 'settings' | 'mandats' | 'suivi-mandats';
+    'image-editor' | 'mes-annonces' | 'saved-listings' | 'history' | 'settings';
     
 type Theme = 'light' | 'dark';
 
@@ -66,8 +64,6 @@ const pageTitles: Record<Page, string> = {
     'saved-listings': "Annonces Enregistrées",
     history: "Historique des Dossiers",
     settings: "Paramètres",
-    mandats: "Gestion des Mandats",
-    'suivi-mandats': "Suivi des Mandats",
 };
 
 // --- MAIN APP COMPONENT ---
@@ -370,8 +366,6 @@ const App = () => {
             case 'calendar': return <CalendarPage appointments={appointments} contacts={contacts} savedAnnonces={savedAnnonces} onAddAppointment={handleAddAppointment} onUpdateAppointment={handleUpdateAppointment} onDeleteAppointment={handleDeleteAppointment} onSelectContact={handleSelectContact} />;
             case 'reports': return <ReportPage reports={reports} contacts={contacts} onDeleteReport={handleDeleteReport} onSelectContact={handleSelectContact} onOpenNewReportModal={handleOpenNewReportModal} onOpenEditReportModal={handleOpenEditReportModal} />;
             case 'estimation': return <EstimationPage contacts={contacts} onSaveEstimation={handleSaveEstimation} />;
-            case 'mandats': return <MandatsPage mandates={mandates} contacts={contacts} onAddMandate={handleAddMandate} onUpdateMandate={handleUpdateMandate} onDeleteMandate={handleDeleteMandate} onSelectContact={handleSelectContact} onUpdateContact={handleUpdateContact} agentInfo={agentInfo} />;
-            case 'suivi-mandats': return <MandateTrackingPage mandates={mandates} contacts={contacts} />;
             case 'image-editor': return <ImageEditorPage onSaveAnnonce={handleSaveAnnonce} annonceToEdit={annonceToEdit} onUpdateAnnonce={handleUpdateAnnonce} setActivePage={setActivePage} />;
             case 'mes-annonces': return <MesAnnoncesPage annonces={savedAnnonces} onDelete={handleDeleteAnnonce} onEdit={handleEditAnnonce} />;
             case 'saved-listings': return <SavedListingsPage contacts={contacts} onUpdateContact={handleUpdateContact} onSelectContact={handleSelectContact} />;
@@ -468,12 +462,6 @@ const Sidebar: React.FC<{ activePage: Page, setActivePage: (page: Page) => void,
             <NavItem icon={<CalendarDaysIcon />} label="Calendrier" page="calendar" activePage={activePage} setActivePage={setActivePage} />
             <NavItem icon={<DocumentChartBarIcon />} label="Rapports Visites" page="reports" activePage={activePage} setActivePage={setActivePage} />
             
-            <div className="pt-4 mt-4 border-t border-border">
-                <p className="px-3 text-xs font-semibold text-secondary uppercase mb-2">Mandats</p>
-                <NavItem icon={<DocumentCheckIcon />} label="Gestion Mandats" page="mandats" activePage={activePage} setActivePage={setActivePage} />
-                <NavItem icon={<DocumentChartBarIcon />} label="Suivi Mandats" page="suivi-mandats" activePage={activePage} setActivePage={setActivePage} />
-            </div>
-
             <div className="pt-4 mt-4 border-t border-border">
                 <p className="px-3 text-xs font-semibold text-secondary uppercase mb-2">Annonces</p>
                 <NavItem icon={<PhotoIcon />} label="Assistant Créatif" page="image-editor" activePage={activePage} setActivePage={setActivePage} />
