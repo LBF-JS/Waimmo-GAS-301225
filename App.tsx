@@ -448,7 +448,6 @@ const App = () => {
 const NavItem: React.FC<{ icon: React.ReactNode, label: string, page: Page, activePage: Page, setActivePage: (page: Page) => void }> = 
 ({ icon, label, page, activePage, setActivePage }) => (
     <button onClick={() => setActivePage(page)} className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg w-full text-left transition-colors ${activePage === page ? 'bg-brand text-white' : 'hover:bg-surface-secondary'}`}>
-        <span className="w-6 h-6">{icon}</span>
         <span>{label}</span>
     </button>
 );
