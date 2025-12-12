@@ -118,7 +118,12 @@ const App = () => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [agentInfo, setAgentInfo] = useState<AgentInfo>(initialAgentInfo);
     const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(initialNotificationSettings);
-    const [n8nWebhookUrl, setN8nWebhookUrl] = useState<string>('');
+    const [n8nWebhookUrl, setN8nWebhookUrl] = useState<string>(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('n8nWebhookUrl') || '';
+        }
+        return '';
+    });
     
     // Pige Page State
     const [pigeState, setPigeState] = useState({
@@ -334,6 +339,7 @@ const App = () => {
         setNotificationSettings(newSettings);
     };
     const handleUpdateN8nWebhookUrl = (url: string) => {
+        localStorage.setItem('n8nWebhookUrl', url);
         setN8nWebhookUrl(url);
         if (url) {
             addNotification("L'URL du webhook n8n a été enregistrée.", NotificationType.AGENT_INFO_UPDATE);
