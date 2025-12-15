@@ -2,6 +2,7 @@
 
 
 
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 // FIX: Import 'GroundingChunk' type to resolve the "Cannot find name" error.
 import { GoogleGenerAI, type GroundingChunk } from '@google/genai';
@@ -507,7 +508,7 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
             const payload = {
                 location,
                 radius,
-                callback_url: `${window.location.origin}/api/pige-results`,
+                callback_url: "https://waimmo.waive.fr/api/pige-results",
                 primordiaux: columns.essentials.map(formatCriterionForN8n),
                 importants: columns.importants.map(formatCriterionForN8n),
                 bonus: columns.secondaries.map(formatCriterionForN8n)
