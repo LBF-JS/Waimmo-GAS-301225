@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Contact, Remark, ProjectStatus, FunnelStage, AssociatedDocument, DocumentType, Appointment, VisitReport, SavedAnnonce, ProjectPriority, SavedListing, TimelineEvent, Estimation, ContactType, SearchCriteria, PropertyType, PropertyStyle } from '../types';
 import { Modal } from './Modal';
@@ -355,47 +353,6 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
         [name]: isNumber ? (value ? parseFloat(value) : undefined) : value,
     }));
   };
-
-    const handleDeleteTimelineEvent = (event: TimelineEvent) => {
-        if (!event.relatedId) return;
-
-        let confirmationMessage = "Êtes-vous sûr de vouloir supprimer cet élément ?";
-        let updatedContact: Contact = { ...contact };
-
-        switch (event.type) {
-            case 'remark':
-                updatedContact.remarks = contact.remarks.filter(r => r.id !== event.relatedId);
-                confirmationMessage = "Êtes-vous sûr de vouloir supprimer cette remarque ?";
-                break;
-            // The main appointment deletion is handled by its own component, this is for the timeline view.
-            case 'appointment':
-                if(window.confirm("Êtes-vous sûr de vouloir supprimer ce rendez-vous ?")) {
-                    onDeleteAppointment(event.relatedId);
-                }
-                return; // Return early as onDeleteAppointment handles state
-            default:
-                return; // Don't allow deletion for other types like 'creation'
-        }
-
-        if (window.confirm(confirmationMessage)) {
-            onUpdateContact({ ...updatedContact, lastUpdateDate: new Date() });
-        }
-    };
-    
-    const handleTimelineEventClick = (event: TimelineEvent) => {
-        switch (event.type) {
-            case 'appointment':
-                setActiveTab('rdv');
-                break;
-            // Add navigation for other event types if needed in the future
-            // case 'report':
-            //    setActiveTab('reports'); // This would require a reports tab
-            //    break;
-            default:
-                break;
-        }
-    };
-
   
   const currentStatus = isEditing ? editFormData.projectStatus : contact.projectStatus;
   const currentFunnelStage = isEditing ? editFormData.funnelStage : contact.funnelStage;
@@ -471,7 +428,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                     <TabButton name="dossier" activeTab={activeTab} setActiveTab={setActiveTab}>Suivi</TabButton>
                     <TabButton name="criteres" activeTab={activeTab} setActiveTab={setActiveTab}>Critères</TabButton>
                     <TabButton name="annonces" activeTab={activeTab} setActiveTab={setActiveTab}>Annonces ({contact.savedListings.length})</TabButton>
-                    <TabButton name="rdv" activeTab={activeTab} setActiveTab={setActiveTab}>RDV</TabButton>
+                    <TabButton name="suivi" activeTab={activeTab} setActiveTab={setActiveTab}>A venir</TabButton>
                     <TabButton name="estimations" activeTab={activeTab} setActiveTab={setActiveTab}>Estimations</TabButton>
                     <TabButton name="documents" activeTab={activeTab} setActiveTab={setActiveTab}>Documents</TabButton>
                 </nav>
@@ -500,12 +457,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                         <div className="relative pl-8 border-l-2 border-border max-h-96 overflow-y-auto pr-2">
                             {timelineEvents.length > 0 ? (
                                 timelineEvents.map(event => (
-                                    <TimelineEventCard 
-                                        key={event.id} 
-                                        event={event} 
-                                        onClick={() => handleTimelineEventClick(event)}
-                                        onDelete={() => handleDeleteTimelineEvent(event)}
-                                    />
+                                    <TimelineEventCard key={event.id} event={event} />
                                 ))
                             ) : (
                                 <p className="text-sm text-secondary italic text-center py-4">Aucun événement pour ce contact.</p>
@@ -527,7 +479,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                     <AssociatedListingsTab contact={contact} onUpdateContact={onUpdateContact} />
                 </div>
             )}
-             {activeTab === 'rdv' && (
+             {activeTab === 'suivi' && (
                 <div className="space-y-6 animate-fade-in">
                     <div className="flex justify-between items-center">
                         <h4 className="text-lg font-semibold text-primary">Historique des rendez-vous</h4>
@@ -645,41 +597,25 @@ const TIMELINE_COLORS = {
     orange: 'bg-orange-500',
 };
 
-const TimelineEventCard: React.FC<{ event: TimelineEvent, onClick: () => void, onDelete: () => void }> = ({ event, onClick, onDelete }) => {
+const TimelineEventCard: React.FC<{ event: TimelineEvent }> = ({ event }) => {
     const Icon = event.icon;
     const bgColor = TIMELINE_COLORS[event.color as keyof typeof TIMELINE_COLORS] || 'bg-secondary';
-    const isClickable = event.type === 'appointment' || event.type === 'report';
 
     return (
-        <div className="relative mb-6 group">
+        <div className="relative mb-6">
             {/* Icon on the timeline */}
-            <div className={`absolute -left-[20px] top-1 z-10 h-8 w-8 rounded-full flex items-center justify-center ring-4 ring-surface ${bgColor}`}>
-                <Icon className="h-5 w-5 text-white" />
+            <div className="absolute -left-[20px] top-1">
+                <span className={`h-8 w-8 rounded-full flex items-center justify-center ring-4 ring-surface ${bgColor}`}>
+                    <Icon className="h-5 w-5 text-white" />
+                </span>
             </div>
             {/* Content box */}
-            <div 
-                onClick={isClickable ? onClick : undefined}
-                className={`ml-8 p-3 bg-surface rounded-lg shadow-sm border-t-2 border-${event.color}-500 ${isClickable ? 'cursor-pointer hover:shadow-md hover:border-brand' : ''}`}
-            >
+            <div className={`ml-8 p-3 bg-surface rounded-lg shadow-sm border-t-2 border-${event.color}-500`}>
                 <div className="flex justify-between items-center mb-1">
                     <h5 className="font-bold text-primary text-md">{event.title}</h5>
-                    <div className="flex items-center gap-2">
-                        <time className="text-xs font-medium text-secondary">
-                            {new Date(event.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        </time>
-                        {event.type !== 'creation' && (
-                             <button
-                                onClick={(e) => {
-                                    e.stopPropagation(); // Prevent card click
-                                    onDelete();
-                                }}
-                                className="p-1 text-secondary opacity-0 group-hover:opacity-100 hover:text-red-500 transition-opacity"
-                                title="Supprimer l'événement"
-                            >
-                                <TrashIcon className="w-4 h-4" />
-                            </button>
-                        )}
-                    </div>
+                    <time className="text-xs font-medium text-secondary">
+                        {new Date(event.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </time>
                 </div>
                 {event.content && (
                     <p className="text-sm text-secondary whitespace-pre-wrap">{event.content}</p>
@@ -966,6 +902,3 @@ const ToggleButton: React.FC<{ selected: boolean; onClick: () => void; children:
     {children}
   </button>
 );
-
-
-    

@@ -1,52 +1,127 @@
-
-
-
-
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-// FIX: Import 'GroundingChunk' type to resolve the "Cannot find name" error.
-import { GoogleGenerAI, type GroundingChunk } from '@google/genai';
-import { ExternalLinkIcon, HomeIcon, PhoneArrowUpRightIcon, StarIcon, MapPinIcon, SparklesIcon, PlusIcon, TrashIcon, XCircleIcon, InformationCircleIcon, ClockIcon, CheckCircleIcon } from '../components/Icons';
+import { GoogleGenAI, type GroundingChunk } from '@google/genai';
+import { ExternalLinkIcon, HomeIcon, PhoneArrowUpRightIcon, StarIcon, MapPinIcon, SparklesIcon, PlusIcon, TrashIcon, XCircleIcon } from '../components/Icons';
 import { PROPERTY_TYPE_OPTIONS } from '../constants';
 import { Modal } from '../components/Modal';
 import { AudioTranscriber } from '../components/AudioTranscriber';
-import { Contact, Criterion, Columns, ColumnId, SavedListing, ListingStatus, PigeResult as PigeResultData, PigeAnnonce, PigeAgenceStat } from '../types';
-
+import { Contact, Criterion, Columns, ColumnId, SavedListing, ListingStatus } from '../types';
 
 type SearchType = 'listings' | 'agencies';
 
+// --- Type Definitions ---
+export interface PigeResult {
+    id: string;
+    title: string;
+    description: string;
+    link?: string;
+    rating?: number;
+    listingCount?: number;
+    score?: number;
+    price?: string;
+    imageUrl?: string;
+    source?: string;
+    agencyName?: string;
+    latitude?: number;
+    longitude?: number;
+}
+
 
 // --- N8N WORKFLOW SIMULATION ---
-const triggerN8nWebhook = async (webhookUrl: string, payload: any): Promise<{ recherche_id: string }> => {
-    if (!webhookUrl) {
-        throw new Error("L'URL du webhook n8n n'est pas configurée. Veuillez l'ajouter dans la page des paramètres.");
-    }
+const triggerN8nWebhook = async (payload: any): Promise<PigeResult[]> => {
+    console.log("===== DÉCLENCHEMENT DU WEBHOOK N8N =====");
+    console.log("Les données suivantes seraient envoyées à votre workflow n8n :");
+    console.log(JSON.stringify(payload, null, 2));
+    console.log("========================================");
 
-    const response = await fetch('/n8n-proxy', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-N8N-Webhook-Url': webhookUrl, 
+    // Simulate network delay for webhook call + workflow execution
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // Return high-quality, realistic mock data as if n8n returned it
+    return [
+        {
+            id: 'n8n-res-1',
+            title: 'Superbe T4 avec terrasse en dernier étage',
+            agencyName: 'Agence du Centre',
+            price: '485 000 €',
+            link: 'https://www.seloger.com/',
+            imageUrl: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1974&auto=format&fit=crop',
+            description: 'Magnifique appartement de 95m² avec une terrasse de 25m² offrant une vue dégagée. Prestations de qualité, cuisine équipée, 3 chambres.',
+            latitude: 43.6047,
+            longitude: 1.4442,
+            score: 92,
+            source: 'Workflow n8n'
         },
-        body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Erreur du webhook n8n: ${response.status} ${response.statusText}. Réponse: ${errorText}`);
-    }
-
-    // n8n now returns an object with a recherche_id
-    const result = await response.json();
-    if (!result.recherche_id) {
-         throw new Error("La réponse du webhook n'a pas retourné de 'recherche_id'.");
-    }
-    return result;
+        {
+            id: 'n8n-res-2',
+            title: 'Maison de ville avec jardin et garage',
+            agencyName: 'ImmoSud',
+            price: '520 000 €',
+            link: 'https://www.logic-immo.com/',
+            imageUrl: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071&auto=format&fit=crop',
+            description: 'Rare sur le secteur, maison de 120m² sur une parcelle de 300m². Grand séjour, 4 chambres, garage. Proche des transports.',
+            latitude: 43.585,
+            longitude: 1.4542,
+            score: 88,
+            source: 'Workflow n8n'
+        },
+        {
+            id: 'n8n-res-3',
+            title: 'Appartement T3 rénové - Hypercentre',
+            agencyName: 'Laforet',
+            price: '350 000 €',
+            link: 'https://www.lefigaro.fr/immobilier/',
+            imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop',
+            description: 'Au coeur de la ville, ce T3 de 70m² a été entièrement rénové avec goût. Pièce de vie lumineuse, deux chambres calmes.',
+            latitude: 43.601,
+            longitude: 1.44,
+            score: 82,
+            source: 'Workflow n8n'
+        },
+        {
+            id: 'n8n-res-4',
+            title: 'Villa d\'architecte avec piscine',
+            agencyName: 'Orpi',
+            price: '780 000 €',
+            link: 'https://www.orpi.com/',
+            imageUrl: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=2070&auto=format&fit=crop',
+            description: 'Prestations exceptionnelles pour cette villa contemporaine de 200m² sur un terrain de 1500m². Piscine, domotique, vue imprenable.',
+            latitude: 43.63,
+            longitude: 1.4,
+            score: 75,
+            source: 'Workflow n8n'
+        },
+        {
+            id: 'n8n-res-5',
+            title: 'Loft atypique proche métro',
+            agencyName: 'Century 21',
+            price: '410 000 €',
+            link: 'https://www.century21.fr/',
+            imageUrl: 'https://images.unsplash.com/photo-1600607687932-e3a428987442?q=80&w=2070&auto=format&fit=crop',
+            description: 'Ancien atelier transformé en loft de 100m². Beaux volumes, style industriel. Idéal pour un couple ou un artiste.',
+            latitude: 43.615,
+            longitude: 1.43,
+            score: 68,
+            source: 'Workflow n8n'
+        },
+        {
+            id: 'n8n-res-6',
+            title: 'T2 avec grand balcon',
+            agencyName: 'Stéphane Plaza Immobilier',
+            price: '230 000 €',
+            link: 'https://www.stephaneplazaimmobilier.com/',
+            imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1980&auto=format&fit=crop',
+            description: 'Dans une résidence récente et sécurisée, appartement T2 de 45m² avec un balcon de 12m². Place de parking incluse.',
+            latitude: 43.57,
+            longitude: 1.46,
+            score: 65,
+            source: 'Workflow n8n'
+        },
+    ];
 };
 
 
 // --- Initial State ---
-export const INITIAL_CRITERIA: Criterion[] = [
+const INITIAL_CRITERIA: Criterion[] = [
     { id: 'propertyType', label: 'Type de bien', type: 'select', value: 'Maison', options: PROPERTY_TYPE_OPTIONS },
     { id: 'budget', label: 'Budget (€)', type: 'numberRange', value: { min: 200000, max: 400000 } },
     { id: 'rooms', label: 'Pièces (min)', type: 'numberRange', value: { min: 3 } },
@@ -77,16 +152,16 @@ const CriterionPill: React.FC<{
                         value={criterion.value}
                         onChange={(e) => onUpdate(e.target.value)}
                         onClick={(e) => e.stopPropagation()}
-                        className="bg-input text-primary text-xs rounded p-1 border-border"
+                        className="bg-gray-700 text-white text-xs rounded p-1"
                     >
-                        {criterion.options?.map(opt => <option key={opt} value={opt} className="bg-surface text-primary">{opt}</option>)}
+                        {criterion.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                 );
             case 'numberRange':
                 return (
                     <div className="flex items-center gap-1">
-                        {criterion.value.min !== undefined && <input type="number" value={criterion.value.min} onChange={(e) => handleValueChange('min', e.target.value)} onClick={(e) => e.stopPropagation()} className="w-20 bg-input text-primary text-xs rounded p-1 border-border" placeholder="Min" />}
-                        {criterion.value.max !== undefined && <input type="number" value={criterion.value.max} onChange={(e) => handleValueChange('max', e.target.value)} onClick={(e) => e.stopPropagation()} className="w-20 bg-input text-primary text-xs rounded p-1 border-border" placeholder="Max" />}
+                        {criterion.value.min !== undefined && <input type="number" value={criterion.value.min} onChange={(e) => handleValueChange('min', e.target.value)} onClick={(e) => e.stopPropagation()} className="w-20 bg-gray-700 text-white text-xs rounded p-1" placeholder="Min" />}
+                        {criterion.value.max !== undefined && <input type="number" value={criterion.value.max} onChange={(e) => handleValueChange('max', e.target.value)} onClick={(e) => e.stopPropagation()} className="w-20 bg-gray-700 text-white text-xs rounded p-1" placeholder="Max" />}
                     </div>
                 );
             default:
@@ -97,7 +172,7 @@ const CriterionPill: React.FC<{
         <div
             draggable={!isSource}
             onDragStart={isSource ? undefined : (e) => { e.dataTransfer.setData('criterionId', criterion.id); }}
-            className={`flex items-center justify-between p-2 rounded-lg bg-surface border border-border cursor-grab active:cursor-grabbing ${isSource ? 'cursor-copy' : ''}`}
+            className={`flex items-center justify-between p-2 rounded-lg bg-gray-800 border border-gray-700 cursor-grab active:cursor-grabbing ${isSource ? 'cursor-copy' : ''}`}
         >
             <div className="flex-grow flex items-center gap-2">
                 <span className="text-sm font-medium text-primary">{criterion.label}</span>
@@ -107,7 +182,7 @@ const CriterionPill: React.FC<{
                 <button 
                     type="button" 
                     onClick={(e) => { e.stopPropagation(); onDelete(); }} 
-                    className="ml-2 p-1 text-secondary hover:text-red-500 flex-shrink-0"
+                    className="ml-2 p-1 text-gray-500 hover:text-red-500 flex-shrink-0"
                     aria-label="Supprimer le critère"
                 >
                     <TrashIcon className="w-4 h-4" />
@@ -131,7 +206,7 @@ const DropColumn: React.FC<{
             onDragOver={(e) => { e.preventDefault(); setIsOver(true); }}
             onDragLeave={() => setIsOver(false)}
             onDrop={(e) => { e.preventDefault(); setIsOver(false); onDrop(e, columnId); }}
-            className={`p-3 rounded-lg min-h-[200px] border-2 border-dashed transition-colors ${isOver ? 'border-brand bg-brand/10' : 'border-border bg-background'}`}
+            className={`bg-gray-900/50 p-3 rounded-lg min-h-[200px] border-2 border-dashed transition-colors ${isOver ? 'border-brand' : 'border-gray-700'}`}
         >
             <h4 className="font-semibold text-center text-primary mb-3">{title}</h4>
             <div className="space-y-2">
@@ -142,60 +217,83 @@ const DropColumn: React.FC<{
                         onUpdate={(value) => onUpdateCriterion(c.id, value)} 
                         onDelete={() => onDeleteCriterion(c.id)}
                     />
-                )) : <p className="text-center text-xs text-secondary pt-10">Glissez un critère ici</p>}
+                )) : <p className="text-center text-xs text-gray-500 pt-10">Glissez un critère ici</p>}
             </div>
         </div>
     );
 };
 
-const ResultAnnonceCard: React.FC<{
-    annonce: PigeAnnonce;
-}> = ({ annonce }) => {
+const ResultCard: React.FC<{
+    result: PigeResult;
+    isSelected: boolean;
+    onSelect: (resultId: string) => void;
+}> = ({ result, isSelected, onSelect }) => {
+    
+    const getScoreColor = (score?: number) => {
+        if (!score) return 'from-gray-400 to-gray-500';
+        if (score > 85) return 'from-teal-400 to-cyan-500';
+        if (score > 70) return 'from-green-400 to-blue-500';
+        if (score > 50) return 'from-yellow-400 to-orange-500';
+        return 'from-red-400 to-pink-500';
+    };
     
     return (
-        <div className="bg-surface rounded-lg shadow-lg overflow-hidden flex flex-col h-full transform transition-transform duration-300 relative">
+        <div 
+            className={`bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col h-full transform hover:scale-105 transition-transform duration-300 relative cursor-pointer ${isSelected ? 'ring-2 ring-brand' : ''}`}
+            onClick={() => onSelect(result.id)}
+        >
+            <div className="absolute top-2 left-2 z-20">
+                <input 
+                    type="checkbox"
+                    checked={isSelected}
+                    readOnly
+                    className="h-5 w-5 rounded text-brand bg-gray-900/50 border-gray-500 focus:ring-brand"
+                />
+            </div>
+            
+            <a href={result.link} target="_blank" rel="noopener noreferrer" className="block relative" onClick={(e) => e.stopPropagation()}>
+                <img 
+                    src={result.imageUrl || 'https://via.placeholder.com/400x300.png?text=Image+non+disponible'} 
+                    alt={result.title} 
+                    className="w-full h-48 object-cover" 
+                    onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/400x300.png?text=Image+invalide'; }}
+                />
+                {result.source && (
+                    <span className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                        {result.source}
+                    </span>
+                )}
+            </a>
             <div className="p-4 flex flex-col flex-grow">
-                <div className="flex justify-between items-start gap-4">
-                    <h3 className="text-md font-bold text-primary flex-grow" title={annonce.titre}>{annonce.titre}</h3>
-                    <div className="flex-shrink-0 text-lg font-semibold text-accent font-lato">
-                        {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(annonce.prix)}
-                    </div>
-                </div>
+                <h3 className="text-md font-bold text-primary truncate flex-grow" title={result.title}>{result.title}</h3>
 
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-secondary my-2">
-                    <span>{annonce.nb_pieces} pièces</span>
-                    <span>{annonce.nb_chambres} chambres</span>
-                    <span>{annonce.surface_m2} m²</span>
-                    <span>{annonce.localisation}</span>
-                </div>
+                {result.agencyName && (
+                  <div className="flex items-center gap-1.5 text-xs text-secondary mt-1">
+                    <HomeIcon className="w-3 h-3"/>
+                    <span>{result.agencyName}</span>
+                  </div>
+                )}
                 
-                 <div className="mt-3" title={`Score de compatibilité : ${annonce.score_compatibilite}%`}>
+                {result.price && <p className="text-lg font-semibold text-accent my-1 font-lato">{result.price}</p>}
+
+                {result.score !== undefined && (
+                  <div className="mt-3" title={`Score de compatibilité : ${result.score}%`}>
                      <div className="flex justify-between items-center mb-1">
                         <span className="text-xs font-medium text-secondary">Compatibilité</span>
-                        <span className="text-primary font-semibold text-xs">{annonce.score_compatibilite}%</span>
+                        <span className="text-primary font-semibold text-xs">{result.score}%</span>
                     </div>
-                    <div className="w-full bg-surface-secondary rounded-full h-2">
+                    <div className="w-full bg-gray-700 rounded-full h-2">
                         <div 
-                            className="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full"
-                            style={{ width: `${annonce.score_compatibilite}%` }}
+                            className={`bg-gradient-to-r ${getScoreColor(result.score)} h-2 rounded-full`}
+                            style={{ width: `${result.score}%` }}
                         ></div>
                     </div>
                   </div>
-
-                <div className="text-xs mt-3 space-y-1">
-                    <p className="font-semibold text-primary">Critères remplis :</p>
-                    <div className="flex flex-wrap gap-1">
-                        {annonce.criteres_matches.map(c => <span key={c} className="bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded text-[10px]">{c}</span>)}
-                    </div>
-                    <p className="font-semibold text-primary mt-1">Critères manquants :</p>
-                    <div className="flex flex-wrap gap-1">
-                        {annonce.criteres_manquants.map(c => <span key={c} className="bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded text-[10px]">{c}</span>)}
-                    </div>
-                </div>
+                )}
             </div>
-             <div className="p-4 pt-2">
+             <div className="p-4 pt-0">
                 <a 
-                    href={annonce.url_annonce} 
+                    href={result.link} 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="w-full inline-flex items-center justify-center text-sm text-white bg-brand hover:bg-brand-dark transition-colors py-2 px-4 rounded-md font-semibold"
@@ -208,12 +306,29 @@ const ResultAnnonceCard: React.FC<{
     );
 };
 
+const AgencyResultCard: React.FC<{result: PigeResult}> = ({ result }) => {
+    return (
+        <a href={result.link} target="_blank" rel="noopener noreferrer" className="block bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col h-full transform hover:scale-105 transition-transform duration-300 p-4">
+            <h3 className="text-md font-bold text-primary truncate flex-grow" title={result.title}>{result.title}</h3>
+            <p className="text-sm text-secondary mt-2 truncate">{result.description}</p>
+            <div className="mt-4 flex justify-between items-center text-xs text-secondary">
+                {result.rating && (
+                    <div className="flex items-center gap-1">
+                        <StarIcon className="w-4 h-4 text-yellow-400" />
+                        <span className="font-semibold">{result.rating}</span>
+                    </div>
+                )}
+                {result.listingCount && (
+                    <span>{result.listingCount} annonces</span>
+                )}
+            </div>
+        </a>
+    );
+};
+
 interface PigePageProps {
     contacts: Contact[];
     onUpdateContact: (updatedContact: Contact) => void;
-    n8nWebhookUrl: string;
-    pigeState: any;
-    setPigeState: (state: any) => void;
 }
 
 const formatCriterionForN8n = (c: Criterion): { label: string; value: any } => {
@@ -229,88 +344,43 @@ const formatCriterionForN8n = (c: Criterion): { label: string; value: any } => {
     }
 };
 
-export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n8nWebhookUrl, pigeState, setPigeState }) => {
-
-    const {
-        searchType, location, radius, availableCriteria, columns, freeTextInput, 
-        isLoading, error, results, coordinates, selectedContactId
-    } = pigeState;
+export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact }) => {
+    const [searchType, setSearchType] = useState<SearchType>('listings');
+    const [location, setLocation] = useState('Toulouse, France');
+    const [radius, setRadius] = useState(5);
+    const [availableCriteria, setAvailableCriteria] = useState<Criterion[]>(INITIAL_CRITERIA);
+    const [columns, setColumns] = useState<Columns>({ essentials: [], importants: [], secondaries: [] });
     
-    // New state for async flow
-    const [currentSearchId, setCurrentSearchId] = useState<string | null>(null);
-    const [pigeResult, setPigeResult] = useState<PigeResultData | null>(null);
-    const pollingIntervalRef = useRef<number | null>(null);
-
-    const setState = (updater: (prevState: any) => any) => {
-        setPigeState(updater(pigeState));
-    };
-
+    const [freeTextInput, setFreeTextInput] = useState('');
     const [transcriptionStatus, setTranscriptionStatus] = useState<{status: 'idle' | 'recording' | 'error', message?: string}>({status: 'idle'});
 
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [results, setResults] = useState<PigeResult[]>([]);
+    
+    const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number; } | null>(null);
     const [isLocating, setIsLocating] = useState(false);
     const [locationError, setLocationError] = useState<string | null>(null);
-
-    const stopPolling = () => {
-        if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-        }
-    };
-
-    useEffect(() => {
-        // Cleanup on unmount
-        return () => {
-            stopPolling();
-        };
-    }, []);
-
-    const pollForResults = useCallback((rechercheId: string) => {
-        stopPolling(); // Stop any previous polling
-
-        pollingIntervalRef.current = window.setInterval(async () => {
-            try {
-                const res = await fetch(`/api/pige-results/${rechercheId}`);
-                if (res.ok) {
-                    const resultData: PigeResultData = await res.json();
-                    setPigeResult(resultData);
-                    setState((s: any) => ({ ...s, isLoading: false }));
-                    stopPolling();
-                }
-                // If 404, we just continue polling
-            } catch (err) {
-                console.error("Polling error:", err);
-                // Optionally handle polling errors, e.g., stop after too many failures
-            }
-        }, 30000); // Poll every 30 seconds
-
-        // Set a timeout to stop polling after 15 minutes
-        setTimeout(() => {
-            if (pollingIntervalRef.current) {
-                stopPolling();
-                if (!pigeResult) {
-                     setState((s: any) => ({ ...s, isLoading: false, error: "La recherche a pris plus de 15 minutes et a été interrompue." }));
-                }
-            }
-        }, 15 * 60 * 1000);
-    }, [pigeState]);
     
+    const [selectedContactId, setSelectedContactId] = useState('');
+    const [selectedResultIds, setSelectedResultIds] = useState<string[]>([]);
+    const [isAssociateModalOpen, setIsAssociateModalOpen] = useState(false);
+    
+    const searchCancelledRef = useRef(false);
 
     const handleLoadCriteriaFromContact = (contactId: string) => {
-        setState((s: any) => ({ ...s, selectedContactId: contactId }));
+        setSelectedContactId(contactId);
         const contact = contacts.find(c => c.id === contactId);
 
-        if (!contact) {
-            setState((s: any) => ({
-                ...s,
-                columns: { essentials: [], importants: [], secondaries: [] },
-                availableCriteria: JSON.parse(JSON.stringify(INITIAL_CRITERIA)),
-                location: '',
-                radius: 5,
-            }));
+        if (!contact || !contact.searchCriteria) {
+            setColumns({ essentials: [], importants: [], secondaries: [] });
+            setAvailableCriteria(JSON.parse(JSON.stringify(INITIAL_CRITERIA)));
+            setLocation('Toulouse, France');
+            setRadius(5);
             return;
         }
 
-        const criteria = contact.searchCriteria || {};
+        const criteria = contact.searchCriteria;
         const available = JSON.parse(JSON.stringify(INITIAL_CRITERIA));
         const newColumns: Columns = { essentials: [], importants: [], secondaries: [] };
 
@@ -323,11 +393,8 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
             }
         };
         
-        setState((s: any) => ({ 
-            ...s,
-            location: criteria.cities || s.location,
-            radius: criteria.searchRadiusKm ? Math.min(criteria.searchRadiusKm, 5) : s.radius
-        }));
+        if (criteria.cities) setLocation(criteria.cities);
+        if (criteria.searchRadiusKm) setRadius(criteria.searchRadiusKm);
         
         if (criteria.targetPrice) {
             const margin = criteria.priceMarginPercent || 10;
@@ -381,8 +448,10 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
             });
         });
 
-        setState((s: any) => ({ ...s, availableCriteria: available, columns: newColumns }));
+        setAvailableCriteria(available);
+        setColumns(newColumns);
     };
+
     
     const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetColumnId: ColumnId | 'available') => {
         const criterionId = e.dataTransfer.getData('criterionId');
@@ -391,8 +460,9 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
         let criterion: Criterion | undefined;
         let originColumn: ColumnId | 'available' | undefined;
         
-        if (availableCriteria.some((c: Criterion) => c.id === criterionId)) {
-            criterion = availableCriteria.find((c: Criterion) => c.id === criterionId);
+        // Find criterion and its origin
+        if (availableCriteria.some(c => c.id === criterionId)) {
+            criterion = availableCriteria.find(c => c.id === criterionId);
             originColumn = 'available';
         } else {
             for (const col of Object.keys(columns) as ColumnId[]) {
@@ -407,9 +477,11 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
         
         if (!criterion || !originColumn || originColumn === targetColumnId) return;
 
+        // --- Immutable state update ---
         const newAvailable = [...availableCriteria];
         const newColumns = JSON.parse(JSON.stringify(columns));
 
+        // 1. Remove from origin
         if (originColumn === 'available') {
             const index = newAvailable.findIndex(c => c.id === criterionId);
             if (index > -1) newAvailable.splice(index, 1);
@@ -418,51 +490,63 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
             if (index > -1) newColumns[originColumn].splice(index, 1);
         }
 
+        // 2. Add to destination
         if (targetColumnId === 'available') {
             newAvailable.push(criterion);
         } else {
             newColumns[targetColumnId].push(criterion);
         }
         
-        setState((s: any) => ({ ...s, availableCriteria: newAvailable, columns: newColumns }));
+        setAvailableCriteria(newAvailable);
+        setColumns(newColumns);
     };
 
     const handleDeleteCriterion = useCallback((criterionId: string) => {
         let criterionToRemove: Criterion | undefined;
         let originColumn: ColumnId | undefined;
 
-        for (const col of Object.keys(pigeState.columns) as ColumnId[]) {
-            const found = pigeState.columns[col].find((c: Criterion) => c.id === criterionId);
+        // Find the criterion and its origin column
+        for (const col of Object.keys(columns) as ColumnId[]) {
+            const found = columns[col].find(c => c.id === criterionId);
             if (found) {
                 criterionToRemove = found;
                 originColumn = col;
                 break;
             }
         }
+
+        // If not found in columns, do nothing.
         if (!criterionToRemove || !originColumn) return;
 
-        const newColumns = { ...pigeState.columns };
-        newColumns[originColumn] = newColumns[originColumn].filter((c: Criterion) => c.id !== criterionId);
+        // Use functional updates for state to avoid race conditions
+        setColumns(prevColumns => {
+            const newColumns = { ...prevColumns };
+            // Remove from the column
+            newColumns[originColumn] = newColumns[originColumn].filter(c => c.id !== criterionId);
+            return newColumns;
+        });
 
-        let newAvailableCriteria = [...pigeState.availableCriteria];
         const isPredefined = INITIAL_CRITERIA.some(c => c.id === criterionId);
-        if (isPredefined && !newAvailableCriteria.some(c => c.id === criterionId)) {
-             newAvailableCriteria.push(criterionToRemove);
+
+        if (isPredefined) {
+            setAvailableCriteria(prevAvailable => {
+                // Avoid adding duplicates
+                if (prevAvailable.some(c => c.id === criterionId)) {
+                    return prevAvailable;
+                }
+                return [...prevAvailable, criterionToRemove!];
+            });
         }
-        
-        setState((s: any) => ({ ...s, columns: newColumns, availableCriteria: newAvailableCriteria }));
-    }, [pigeState, setState]);
+    }, [columns]);
     
     const handleUpdateCriterion = (criterionId: string, value: any) => {
         const updateInArray = (arr: Criterion[]) => arr.map(c => c.id === criterionId ? { ...c, value } : c);
-        setState((s: any) => ({
-            ...s,
-            availableCriteria: updateInArray(s.availableCriteria),
-            columns: {
-                essentials: updateInArray(s.columns.essentials),
-                importants: updateInArray(s.columns.importants),
-                secondaries: updateInArray(s.columns.secondaries),
-            }
+        
+        setAvailableCriteria(prev => updateInArray(prev));
+        setColumns(prev => ({
+            essentials: updateInArray(prev.essentials),
+            importants: updateInArray(prev.importants),
+            secondaries: updateInArray(prev.secondaries),
         }));
     };
 
@@ -473,11 +557,11 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
             label: freeTextInput.trim(),
             type: 'custom',
         };
-        setState((s: any) => ({
-            ...s,
-            columns: { ...s.columns, [columnId]: [...s.columns[columnId], newCriterion] },
-            freeTextInput: ''
+        setColumns(prev => ({
+            ...prev,
+            [columnId]: [...prev[columnId], newCriterion],
         }));
+        setFreeTextInput('');
     };
 
     const handleGeolocate = () => {
@@ -485,7 +569,8 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
         setLocationError(null);
         navigator.geolocation.getCurrentPosition(
             (pos) => {
-                setState((s: any) => ({ ...s, coordinates: { latitude: pos.coords.latitude, longitude: pos.coords.longitude }, location: "Ma position actuelle" }));
+                setCoordinates({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+                setLocation("Ma position actuelle");
                 setIsLocating(false);
             },
             (err) => {
@@ -496,37 +581,148 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
     };
     
     const handleCancel = () => {
-        stopPolling();
-        setState((s: any) => ({ ...s, isLoading: false, currentSearchId: null, pigeResult: null }));
+        searchCancelledRef.current = true;
+        setIsLoading(false);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setState((s: any) => ({ ...s, isLoading: true, error: null, pigeResult: null, currentSearchId: null }));
+        searchCancelledRef.current = false;
+        setIsLoading(true);
+        setError(null);
+        setResults([]);
+        setSelectedResultIds([]);
 
         try {
-            const payload = {
-                location,
-                radius,
-                callback_url: "https://waimmo.waive.fr/api/pige-results",
-                primordiaux: columns.essentials.map(formatCriterionForN8n),
-                importants: columns.importants.map(formatCriterionForN8n),
-                bonus: columns.secondaries.map(formatCriterionForN8n)
-            };
-            const { recherche_id } = await triggerN8nWebhook(n8nWebhookUrl, payload);
-            setCurrentSearchId(recherche_id);
-            pollForResults(recherche_id);
+            if (searchType === 'listings') {
+                const payload = {
+                    location,
+                    radius,
+                    primordiaux: columns.essentials.map(formatCriterionForN8n),
+                    importants: columns.importants.map(formatCriterionForN8n),
+                    bonus: columns.secondaries.map(formatCriterionForN8n)
+                };
+                const n8nResults = await triggerN8nWebhook(payload);
+                if (searchCancelledRef.current) return;
+                setResults(n8nResults);
+            } else { // 'agencies' search
+                const prompt = `**ROLE**: Tu es un robot d'indexation web spécialisé dans l'annuaire d'entreprises.
+                **TA MISSION**: Utilise tes outils de recherche web et de cartographie pour trouver des agences immobilières dans un rayon de ${radius}km autour de "${location}".
+                **FORMAT DE SORTIE OBLIGATOIRE**: Ta réponse DOIT être UNIQUEMENT un tableau JSON valide (formaté comme une chaîne de caractères pure) avec les clés: "title", "description", "rating", "listingCount", "link", "latitude", "longitude". Si une information n'est pas disponible, utilise 'null'.
+                **COMMENCE TA RÉPONSE DIRECTEMENT AVEC LE CARACTÈRE '['.**`;
+                
+                const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+                const config: any = { tools: [{ googleSearch: {} }, { googleMaps: {} }] };
+                if (coordinates) {
+                    config.toolConfig = { retrievalConfig: { latLng: coordinates } };
+                }
+                
+                const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: config });
+                if (searchCancelledRef.current) return;
 
+                const parsedResults = parseGeminiResponse(response.text);
+                setResults(parsedResults);
+            }
         } catch (err: any) {
+            if (searchCancelledRef.current) return;
             console.error(err);
-            setState((s: any) => ({ ...s, isLoading: false, error: "Une erreur est survenue lors du lancement de la recherche. Détails: " + err.message }));
+            setError("Une erreur est survenue lors de la recherche. Détails: " + err.message);
+        } finally {
+            if (!searchCancelledRef.current) setIsLoading(false);
         }
     };
     
+    const parseGeminiResponse = (text: string): PigeResult[] => {
+        try {
+            let jsonString = text.trim();
+            if (jsonString.startsWith('```json')) {
+                jsonString = jsonString.substring(7, jsonString.length - 3).trim();
+            } else if (jsonString.startsWith('```')) {
+                 jsonString = jsonString.substring(3, jsonString.length - 3).trim();
+            }
+            
+            const items: any[] = JSON.parse(jsonString);
 
-    const handleFieldChange = (field: string, value: any) => {
-        setState((s: any) => ({ ...s, [field]: value }));
+            if (!Array.isArray(items)) {
+                throw new Error("La réponse de l'IA n'est pas un tableau.");
+            }
+            
+            return items.map((item, index) => ({
+                id: `res-${Date.now()}-${index}`,
+                title: item.title || 'Sans titre',
+                description: item.description || '',
+                link: item.link,
+                rating: item.rating,
+                listingCount: item.listingCount,
+                score: item.score,
+                price: item.price,
+                imageUrl: item.imageUrl,
+                source: item.source,
+                agencyName: item.agencyName,
+                latitude: item.latitude,
+                longitude: item.longitude,
+            }));
+        } catch (e: any) {
+            console.error("Failed to parse JSON response:", e, "Raw text:", text);
+            setError(`Failed to parse JSON response:\n${e.message}`);
+            return [];
+        }
     };
+
+    const handleSelectResult = (resultId: string) => {
+        setSelectedResultIds(prev =>
+            prev.includes(resultId)
+                ? prev.filter(id => id !== resultId)
+                : [...prev, resultId]
+        );
+    };
+
+    const handleAssociateListings = (contactId: string) => {
+        const contact = contacts.find(c => c.id === contactId);
+        if (!contact) return;
+
+        const selectedResults = results.filter(r => selectedResultIds.includes(r.id));
+        
+        const newListings: SavedListing[] = selectedResults.map(result => ({
+            id: `listing-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            contactId: contact.id,
+            savedDate: new Date(),
+            status: ListingStatus.Nouveau,
+            remarks: [],
+            title: result.title,
+            price: result.price || 'N/P',
+            link: result.link || '#',
+            imageUrl: result.imageUrl || '',
+            source: result.agencyName || result.source || 'Pige IA',
+            description: result.description,
+        }));
+
+        const updatedContact: Contact = {
+            ...contact,
+            savedListings: [...newListings, ...contact.savedListings],
+            lastUpdateDate: new Date(),
+        };
+
+        onUpdateContact(updatedContact);
+        
+        alert(`${newListings.length} annonce(s) ajoutée(s) au dossier de ${contact.firstName} ${contact.lastName}.`);
+        setSelectedResultIds([]);
+    };
+
+    const handleOpenAssociateModal = () => {
+        const activeContacts = contacts.filter(c => c.projectStatus !== 'Terminé' && c.projectStatus !== 'Perdu');
+        if (activeContacts.length === 0) {
+            alert("Aucun contact actif à qui associer ces annonces.");
+            return;
+        }
+        setIsAssociateModalOpen(true);
+    };
+
+    const handleConfirmAssociation = (contactId: string) => {
+        handleAssociateListings(contactId);
+        setIsAssociateModalOpen(false);
+    };
+
 
     return (
         <div className="space-y-4">
@@ -538,29 +734,19 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                  <form onSubmit={handleSubmit} className="space-y-3">
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                         <div className="flex items-center space-x-2 rounded-lg bg-input p-1">
-                             <RadioOption name="searchType" value="listings" checked={searchType === 'listings'} onChange={(e) => handleFieldChange('searchType', e.target.value as SearchType)} label="Annonces" />
-                             <RadioOption name="searchType" value="agencies" checked={searchType === 'agencies'} onChange={(e) => handleFieldChange('searchType', e.target.value as SearchType)} label="Agences" />
+                             <RadioOption name="searchType" value="listings" checked={searchType === 'listings'} onChange={(e) => setSearchType(e.target.value as SearchType)} label="Annonces" />
+                             <RadioOption name="searchType" value="agencies" checked={searchType === 'agencies'} onChange={(e) => setSearchType(e.target.value as SearchType)} label="Agences" />
                         </div>
                         <div className="flex-grow relative min-w-[200px]">
                             <label htmlFor="location" className="sr-only">Localisation</label>
-                            <input type="text" name="location" id="location" value={location} onChange={(e) => handleFieldChange('location', e.target.value)} className="w-full bg-input p-2 rounded-md border-border pr-10" required />
+                            <input type="text" name="location" id="location" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-input p-2 rounded-md border-border pr-10" required />
                             <button type="button" onClick={handleGeolocate} disabled={isLocating} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-secondary hover:text-primary disabled:opacity-50" aria-label="Utiliser ma position actuelle">
                                 {isLocating ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div> : <MapPinIcon className="w-5 h-5"/>}
                             </button>
                         </div>
                         <div>
                             <label htmlFor="radius" className="text-xs text-secondary">Rayon (km)</label>
-                            <input 
-                                type="number" 
-                                name="radius" 
-                                id="radius" 
-                                value={radius} 
-                                onChange={(e) => handleFieldChange('radius', Math.min(50, Number(e.target.value)))} // Increased max radius
-                                min="1" 
-                                max="50" 
-                                className="w-24 bg-input p-2 rounded-md border-border" 
-                                required 
-                            />
+                            <input type="number" name="radius" id="radius" value={radius} onChange={(e) => setRadius(Number(e.target.value))} min="1" className="w-24 bg-input p-2 rounded-md border-border" required />
                         </div>
                         <div className="flex-grow flex justify-end">
                             {!isLoading ? (
@@ -570,37 +756,28 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                                 </button>
                             ) : (
                                 <button type="button" onClick={handleCancel} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors">
-                                    Annuler
+                                    Arrêter
                                 </button>
                             )}
                         </div>
                     </div>
-                     <div className="flex items-center gap-2 text-xs text-secondary bg-background p-2 rounded-md">
-                        <InformationCircleIcon className="w-5 h-5 text-sky-400 flex-shrink-0"/>
-                        <span>Pour les grandes villes, privilégiez les noms de quartiers dans le champ de localisation pour des résultats plus précis.</span>
-                    </div>
                     {searchType === 'listings' && (
                         <div className="pt-3 mt-2 border-t border-border animate-fade-in">
-                            <div className="bg-surface-secondary p-3 rounded-lg mb-4 flex items-center gap-4">
+                             <div className="bg-surface-secondary p-3 rounded-lg mb-4 flex items-center gap-4">
                                 <label htmlFor="contact-criteria-loader" className="text-sm font-medium text-secondary flex-shrink-0">
                                     Reprendre les critères de :
                                 </label>
-                                <div className="flex-grow relative">
-                                    <select 
-                                        id="contact-criteria-loader"
-                                        value={selectedContactId}
-                                        onChange={(e) => handleLoadCriteriaFromContact(e.target.value)}
-                                        className="w-full bg-input border-border rounded-md p-2 text-sm appearance-none"
-                                    >
-                                        <option value="">-- Sélectionner un contact --</option>
-                                        {contacts.filter(c => c.searchCriteria).map(c => (
-                                            <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
-                                        ))}
-                                    </select>
-                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-secondary">
-                                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                                    </div>
-                                </div>
+                                <select 
+                                    id="contact-criteria-loader"
+                                    value={selectedContactId}
+                                    onChange={(e) => handleLoadCriteriaFromContact(e.target.value)}
+                                    className="flex-grow bg-input border-border rounded-md p-2 text-sm"
+                                >
+                                    <option value="">-- Sélectionner un contact --</option>
+                                    {contacts.filter(c => c.searchCriteria).map(c => (
+                                        <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
+                                    ))}
+                                </select>
                                 {selectedContactId && (
                                     <button 
                                         type="button" 
@@ -622,14 +799,14 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                                     <textarea
                                     id="freeTextInput"
                                     value={freeTextInput}
-                                    onChange={(e) => handleFieldChange('freeTextInput', e.target.value)}
+                                    onChange={(e) => setFreeTextInput(e.target.value)}
                                     rows={3}
                                     className="block w-full bg-input border-border rounded-md p-2 pr-12"
                                     placeholder="Ex: 'proche d'une école primaire', 'sans vis-à-vis', 'dernier étage avec ascenseur'..."
                                     />
                                     <div className="absolute top-2 right-2">
                                     <AudioTranscriber
-                                        onTranscriptionUpdate={textChunk => handleFieldChange('freeTextInput', pigeState.freeTextInput + textChunk)}
+                                        onTranscriptionUpdate={textChunk => setFreeTextInput(prev => prev + textChunk)}
                                         onTranscriptionComplete={() => {}}
                                         onStatusChange={(status, message) => setTranscriptionStatus({ status, message })}
                                     />
@@ -651,7 +828,7 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                                 >
                                     <h4 className="font-semibold text-center text-primary mb-3">Critères disponibles</h4>
                                     <div className="space-y-2">
-                                        {availableCriteria.map((c: Criterion) => 
+                                        {availableCriteria.map(c => 
                                             <div key={c.id} draggable onDragStart={(e) => e.dataTransfer.setData('criterionId', c.id)}>
                                                 <CriterionPill criterion={c} onUpdate={(value) => handleUpdateCriterion(c.id, value)} isSource/>
                                             </div>
@@ -675,55 +852,76 @@ export const PigePage: React.FC<PigePageProps> = ({ contacts, onUpdateContact, n
                      <div className="flex h-full flex-col items-center justify-center text-center p-10 bg-surface rounded-lg">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mb-4"></div>
                         <p className="text-secondary font-semibold">Recherche en cours...</p>
-                        <p className="text-sm text-gray-500">Le workflow n8n a été déclenché. Les résultats apparaîtront ici d'ici 5 à 10 minutes.</p>
-                        <p className="text-xs text-gray-600 mt-2">(Vous pouvez quitter cette page et revenir plus tard)</p>
+                        <p className="text-sm text-gray-500">{searchType === 'listings' ? "Déclenchement du workflow n8n..." : "Analyse IA des agences..."}</p>
                     </div>
                 )}
                 {error && <div className="p-4 bg-red-900/50 border border-red-700 rounded-lg text-red-300"><h4 className="font-bold">Erreur</h4><pre className="whitespace-pre-wrap text-xs">{error}</pre></div>}
                 
-                {pigeResult && (
+                {results.length > 0 && (
                     <div className="bg-surface rounded-lg shadow-lg animate-fade-in">
-                        <div className="p-4 border-b border-border">
-                             <div className="flex justify-between items-center">
-                                <h3 className="font-semibold text-primary">Résultats de la pige (Recherche ID: {pigeResult.data.payload.recherche_id})</h3>
-                                <p className="text-xs text-secondary">Reçu le {new Date(pigeResult.receivedAt).toLocaleString('fr-FR')}</p>
-                            </div>
-                            <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-sm text-secondary">
-                                <StatItem label="Agences Scannées" value={pigeResult.data.payload.stats.agences_scrapees} />
-                                <StatItem label="Annonces Trouvées" value={pigeResult.data.payload.stats.annonces_trouvees_total} />
-                                <StatItem label="Annonces Uniques" value={pigeResult.data.payload.stats.annonces_apres_deduplication} />
-                                <StatItem label="Doublons Supprimés" value={pigeResult.data.payload.stats.doublons_supprimes} />
-                            </div>
+                        <div className="p-4 border-b border-border flex justify-between items-center">
+                            <h3 className="font-semibold text-primary">
+                                Résultats de la pige ({results.length})
+                                {searchType === 'listings' && <span className="ml-2 text-xs bg-blue-500/30 text-blue-300 px-2 py-1 rounded-full">via Workflow n8n</span>}
+                            </h3>
                         </div>
 
                        <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                         {pigeResult.data.payload.annonces.sort((a,b) => b.score_compatibilite - a.score_compatibilite).map((annonce, index) => (
-                           <ResultAnnonceCard key={annonce.url_annonce || index} annonce={annonce} />
+                         {results.map((res) => (
+                           <div key={res.id}>
+                                {searchType === 'listings' ? (
+                                    <ResultCard 
+                                        result={res} 
+                                        isSelected={selectedResultIds.includes(res.id)}
+                                        onSelect={handleSelectResult}
+                                    />
+                                ) : (
+                                    <AgencyResultCard result={res} />
+                                )}
+                           </div>
                          ))}
                        </div>
                     </div>
                 )}
+                 {selectedResultIds.length > 0 && (
+                    <div className="sticky bottom-6 z-20 w-full flex justify-center animate-fade-in-up">
+                        <div className="bg-surface shadow-lg rounded-lg p-3 flex items-center gap-4 border border-border">
+                            <span className="text-sm font-semibold">{selectedResultIds.length} annonce(s) sélectionnée(s)</span>
+                            <button onClick={handleOpenAssociateModal} className="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-md">
+                                Associer à un contact...
+                            </button>
+                            <button onClick={() => setSelectedResultIds([])} className="p-2 text-secondary hover:text-primary" title="Désélectionner tout">
+                                <XCircleIcon className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
+
+            <Modal isOpen={isAssociateModalOpen} onClose={() => setIsAssociateModalOpen(false)} title={`Associer ${selectedResultIds.length} annonce(s)`}>
+                <div className="space-y-4">
+                    <p>Sélectionnez le contact auquel vous souhaitez ajouter ces annonces :</p>
+                    <div className="max-h-60 overflow-y-auto space-y-2">
+                        {contacts.filter(c => c.projectStatus !== 'Terminé' && c.projectStatus !== 'Perdu').map(contact => (
+                            <button 
+                                key={contact.id} 
+                                onClick={() => handleConfirmAssociation(contact.id)}
+                                className="w-full text-left p-3 bg-gray-800 hover:bg-gray-700 rounded-md transition-colors"
+                            >
+                                <span className="font-semibold text-primary">{contact.firstName} {contact.lastName}</span>
+                                <span className="text-sm text-secondary block">{contact.contactType}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 };
 
-const StatItem: React.FC<{label: string, value: number}> = ({label, value}) => (
-    <div className="flex items-center gap-2">
-        <span className="font-semibold text-primary">{value}</span>
-        <span className="text-secondary">{label}</span>
-    </div>
-);
-
 const RadioOption: React.FC<{name: string, value: string, checked: boolean, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, label: string}> = ({ name, value, checked, onChange, label }) => (
-    <label className={`flex items-center space-x-2 px-3 py-1.5 rounded-md cursor-pointer transition-colors text-sm font-medium ${checked ? 'bg-brand text-white' : 'hover:bg-surface'}`}>
+    <label className={`flex items-center space-x-2 px-3 py-1.5 rounded-md cursor-pointer transition-colors text-sm font-medium ${checked ? 'bg-brand text-white' : 'bg-surface-secondary hover:bg-surface'}`}>
         <input type="radio" name={name} value={value} checked={checked} onChange={onChange} className="hidden" />
         <span>{label}</span>
     </label>
 );
-
-
-
-    
-
-    

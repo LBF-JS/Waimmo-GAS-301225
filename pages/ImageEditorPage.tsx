@@ -30,7 +30,7 @@ const TabButton: React.FC<{ label: string, onClick: () => void, isActive: boolea
     <button
         onClick={onClick}
         className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            isActive ? 'bg-brand text-white shadow' : 'text-secondary hover:bg-surface-secondary'
+            isActive ? 'bg-brand text-white shadow' : 'text-secondary hover:bg-gray-800'
         }`}
     >
         {label}
@@ -335,11 +335,11 @@ export const ImageEditorPage: React.FC<ImageEditorPageProps> = ({ onSaveAnnonce,
             </div>
             
             <div className="bg-surface p-6 rounded-lg shadow-lg">
-                <h3 className="text-xl font-semibold text-primary mb-4 border-b border-border pb-2">Étape 1 : Atelier d'Images</h3>
+                <h3 className="text-xl font-semibold text-primary mb-4 border-b border-gray-700 pb-2">Étape 1 : Atelier d'Images</h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Image Generation UI */}
                     <div className="space-y-4">
-                        <div className="flex items-center space-x-2 rounded-lg bg-input p-1 self-start">
+                        <div className="flex items-center space-x-2 rounded-lg bg-gray-900 p-1 self-start">
                             <TabButton label="Retoucher" onClick={() => handleModeChange('edit')} isActive={mode === 'edit'} />
                             <TabButton label="Générer" onClick={() => handleModeChange('generate')} isActive={mode === 'generate'} />
                         </div>
@@ -347,11 +347,11 @@ export const ImageEditorPage: React.FC<ImageEditorPageProps> = ({ onSaveAnnonce,
                         {mode === 'edit' && (
                             <div className="animate-fade-in">
                                 <label className="block text-sm font-medium text-secondary mb-1">Ajoutez des images de base</label>
-                                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-border border-dashed rounded-md">
+                                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md">
                                     <div className="space-y-1 text-center">
                                         <PhotoIcon className="mx-auto h-12 w-12 text-gray-500" />
                                         <div className="flex text-sm text-gray-400">
-                                            <label htmlFor="file-upload" className="relative cursor-pointer bg-surface-secondary rounded-md font-medium text-brand hover:text-brand-light focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-gray-900 focus-within:ring-brand px-1">
+                                            <label htmlFor="file-upload" className="relative cursor-pointer bg-gray-800 rounded-md font-medium text-brand hover:text-brand-light focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-gray-900 focus-within:ring-brand px-1">
                                                 <span>Téléchargez un ou plusieurs fichiers</span>
                                                 <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleImageUpload} accept="image/*" multiple />
                                             </label>
@@ -375,7 +375,7 @@ export const ImageEditorPage: React.FC<ImageEditorPageProps> = ({ onSaveAnnonce,
                                                     <div className="absolute bottom-1 right-1 bg-brand p-1 rounded-full"><SparklesIcon className="w-3 h-3 text-white" /></div>
                                                 )}
                                             </button>
-                                            <button onClick={() => handleDeleteImage(image.id)} className="absolute -top-2 -right-2 bg-red-600 rounded-full text-white hover:bg-red-700"><XCircleIcon className="w-6 h-6" /></button>
+                                            <button onClick={() => handleDeleteImage(image.id)} className="absolute -top-2 -right-2 bg-gray-700 rounded-full text-white hover:bg-red-600"><XCircleIcon className="w-6 h-6" /></button>
                                         </div>
                                     ))}
                                 </div>
@@ -386,13 +386,13 @@ export const ImageEditorPage: React.FC<ImageEditorPageProps> = ({ onSaveAnnonce,
                             <label htmlFor="prompt" className="block text-sm font-medium text-secondary">{mode === 'edit' ? 'Consigne de retouche' : 'Description de l\'image'}</label>
                             <textarea id="prompt" rows={3} value={prompt} onChange={(e) => setPrompt(e.target.value)}
                                 placeholder={mode === 'edit' ? "Ex: change le ciel pour un coucher de soleil..." : "Ex: Une villa moderne avec piscine et vue sur mer..."}
-                                className="mt-1 block w-full bg-input border-border rounded-md p-2" disabled={mode === 'edit' && !selectedImageId} />
+                                className="mt-1 block w-full bg-gray-900 border-gray-700 rounded-md p-2" disabled={mode === 'edit' && !selectedImageId} />
                         </div>
                         
                         <div className="flex items-center justify-between pt-2">
                              <button type="button" onClick={handleReset} className="text-sm text-secondary hover:text-primary flex items-center gap-1"><ArrowPathIcon className="w-4 h-4" />{annonceToEdit ? "Annuler" : "Réinitialiser"}</button>
                             <button type="button" onClick={handleGenerateImage} disabled={isGenerateImageDisabled}
-                                className="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-md flex items-center gap-2 disabled:bg-gray-600">
+                                className="bg-brand hover:bg-brand-dark text-white font-bold py-2 px-4 rounded-md flex items-center gap-2">
                                 {isLoading ? (<><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div><span>Génération...</span></>) : (<><SparklesIcon className="w-5 h-5"/><span>{mode === 'edit' ? 'Retoucher' : 'Générer'}</span></>)}
                             </button>
                         </div>
@@ -402,13 +402,13 @@ export const ImageEditorPage: React.FC<ImageEditorPageProps> = ({ onSaveAnnonce,
                     <div className="flex flex-row gap-4">
                         <div className="w-1/2">
                             <h3 className="text-md font-semibold text-center text-secondary mb-2">Originale</h3>
-                            <div className="aspect-square bg-input rounded-md flex items-center justify-center p-2" draggable={!!selectedImage} onDragStart={(e) => selectedImage && handleDragStart(e, selectedImage.url)}>
+                            <div className="aspect-square bg-gray-900 rounded-md flex items-center justify-center p-2" draggable={!!selectedImage} onDragStart={(e) => selectedImage && handleDragStart(e, selectedImage.url)}>
                                 {selectedImage ? <img src={selectedImage.url} alt="Original" className="max-h-full max-w-full object-contain rounded-md cursor-grab" /> : <PhotoIcon className="w-16 h-16 text-gray-700" />}
                             </div>
                         </div>
                         <div className="w-1/2">
                             <h3 className="text-md font-semibold text-center text-secondary mb-2">Modifiée</h3>
-                            <div className="aspect-square bg-input rounded-md flex items-center justify-center relative" draggable={!!selectedGeneratedImage} onDragStart={(e) => selectedGeneratedImage && handleDragStart(e, selectedGeneratedImage)}>
+                            <div className="aspect-square bg-gray-900 rounded-md flex items-center justify-center relative" draggable={!!selectedGeneratedImage} onDragStart={(e) => selectedGeneratedImage && handleDragStart(e, selectedGeneratedImage)}>
                                 {isLoading && selectedImageId === (imageList.find(img => img.id === selectedImageId)?.id) && (<div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-md"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand"></div></div>)}
                                 {selectedGeneratedImage ? <img src={selectedGeneratedImage} alt="Modifiée" className="max-h-full max-w-full object-contain rounded-md cursor-grab" onClick={() => handleViewImage(selectedGeneratedImage)} /> : <SparklesIcon className="w-16 h-16 text-gray-700" />}
                             </div>
@@ -417,7 +417,7 @@ export const ImageEditorPage: React.FC<ImageEditorPageProps> = ({ onSaveAnnonce,
                 </div>
 
                 <div 
-                    className={`mt-8 space-y-4 rounded-lg border-2 border-dashed p-4 transition-colors ${isDraggingOver ? 'border-brand bg-brand/10' : 'border-border'}`}
+                    className={`mt-8 space-y-4 rounded-lg border-2 border-dashed p-4 transition-colors ${isDraggingOver ? 'border-brand bg-brand/10' : 'border-gray-600'}`}
                     onDrop={handleDrop} onDragOver={handleDragOver} onDragEnter={() => setIsDraggingOver(true)} onDragLeave={handleDragLeave}
                 >
                     <h3 className="text-xl font-semibold text-primary">Images de l'annonce</h3>
@@ -442,12 +442,12 @@ export const ImageEditorPage: React.FC<ImageEditorPageProps> = ({ onSaveAnnonce,
             </div>
 
             <div className="bg-surface p-6 rounded-lg shadow-lg">
-                <h3 className="text-xl font-semibold text-primary mb-4 border-b border-border pb-2">Étape 2 : Rédaction de l'Annonce</h3>
+                <h3 className="text-xl font-semibold text-primary mb-4 border-b border-gray-700 pb-2">Étape 2 : Rédaction de l'Annonce</h3>
                 <div className="space-y-3">
                     <div>
                         <label htmlFor="descriptionInput" className="block text-sm font-medium text-secondary">Saisissez ou dictez votre texte brut</label>
                         <div className="relative mt-1">
-                            <textarea id="descriptionInput" value={descriptionInput} onChange={(e) => setDescriptionInput(e.target.value)} rows={5} className="block w-full bg-input border-border rounded-md p-2 pr-12" placeholder="Ex: belle maison t4 120m2 toulouse..."/>
+                            <textarea id="descriptionInput" value={descriptionInput} onChange={(e) => setDescriptionInput(e.target.value)} rows={5} className="block w-full bg-gray-900 border-gray-700 rounded-md p-2 pr-12" placeholder="Ex: belle maison t4 120m2 toulouse..."/>
                             <div className="absolute top-2 right-2">
                                 <AudioTranscriber 
                                     onTranscriptionUpdate={textChunk => setDescriptionInput(prev => prev + textChunk)} 
@@ -457,7 +457,7 @@ export const ImageEditorPage: React.FC<ImageEditorPageProps> = ({ onSaveAnnonce,
                             </div>
                         </div>
                     </div>
-                    <button type="button" onClick={handleImproveDescription} disabled={isImproving || !descriptionInput.trim()} className="bg-brand/80 hover:bg-brand text-white font-bold py-2 px-3 rounded-md text-sm flex items-center gap-2 disabled:bg-gray-600">
+                    <button type="button" onClick={handleImproveDescription} disabled={isImproving || !descriptionInput.trim()} className="bg-brand/80 hover:bg-brand text-white font-bold py-2 px-3 rounded-md text-sm flex items-center gap-2">
                         {isImproving ? (<><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Amélioration...</span></>) : (<><SparklesIcon className="w-4 h-4"/><span>Améliorer le texte</span></>)}
                     </button>
                     {descriptionError && <p className="text-red-400 text-sm">{descriptionError}</p>}
@@ -469,7 +469,7 @@ export const ImageEditorPage: React.FC<ImageEditorPageProps> = ({ onSaveAnnonce,
                             {copySuccess ? 'Copié !' : 'Copier'}
                         </button>
                     </div>
-                    <div className="w-full min-h-[150px] bg-input rounded-md p-3 text-sm prose prose-invert max-w-none prose-p:my-1 whitespace-pre-wrap overflow-y-auto">
+                    <div className="w-full min-h-[150px] bg-gray-900 rounded-md p-3 text-sm prose prose-invert max-w-none prose-p:my-1 whitespace-pre-wrap overflow-y-auto">
                         {isImproving ? (<div className="flex items-center justify-center h-full text-secondary"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div></div>
                         ) : improvedDescription ? (<div dangerouslySetInnerHTML={{ __html: improvedDescription.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br />') }} />
                         ) : (<p className="text-center text-secondary italic">Le résultat apparaîtra ici.</p>)}

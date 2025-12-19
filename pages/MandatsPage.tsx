@@ -162,7 +162,7 @@ export const MandatsPage: React.FC<MandatsPageProps> = ({ mandates, contacts, on
         </button>
       </div>
 
-       <div className="border-b border-border">
+       <div className="border-b border-gray-700">
           <nav className="-mb-px flex space-x-4" aria-label="Tabs">
               <TabButton label="Liste des Mandats" isActive={activeTab === 'list'} onClick={() => setActiveTab('list')} />
               <TabButton label="Génération de Documents" isActive={activeTab === 'generator'} onClick={() => setActiveTab('generator')} />
@@ -171,7 +171,7 @@ export const MandatsPage: React.FC<MandatsPageProps> = ({ mandates, contacts, on
 
       {activeTab === 'list' && (
         <div className="bg-surface p-4 rounded-lg shadow-lg animate-fade-in">
-            <div className="space-y-4 mb-4 border-b border-border pb-4">
+            <div className="space-y-4 mb-4 border-b border-gray-700 pb-4">
                 <div>
                     <h4 className="text-sm font-semibold text-secondary mb-2">Filtrer par statut</h4>
                     <div className="flex flex-wrap gap-2 items-center">
@@ -180,7 +180,7 @@ export const MandatsPage: React.FC<MandatsPageProps> = ({ mandates, contacts, on
                             className={`px-3 py-1 text-xs rounded-full transition-colors font-medium ${
                                 statusFilter === 'all'
                                 ? 'bg-brand text-white'
-                                : 'bg-surface-secondary text-secondary hover:bg-opacity-80'
+                                : 'bg-gray-700 text-secondary hover:bg-gray-600'
                             }`}
                         >
                             Tous les statuts ({mandates.length})
@@ -192,7 +192,7 @@ export const MandatsPage: React.FC<MandatsPageProps> = ({ mandates, contacts, on
                                 className={`px-3 py-1 text-xs rounded-full transition-colors ${
                                     statusFilter === status
                                     ? `${MANDATE_STATUS_COLORS[status as MandateStatus]}`
-                                    : 'bg-surface text-secondary hover:bg-surface-secondary border border-border'
+                                    : 'bg-surface text-secondary hover:bg-gray-800 border border-gray-600'
                                 }`}
                             >
                                 {status} ({statusCounts[status as MandateStatus] || 0})
@@ -208,7 +208,7 @@ export const MandatsPage: React.FC<MandatsPageProps> = ({ mandates, contacts, on
                             className={`px-3 py-1 text-xs rounded-full transition-colors font-medium ${
                                 typeFilter === 'all'
                                 ? 'bg-brand text-white'
-                                : 'bg-surface-secondary text-secondary hover:bg-opacity-80'
+                                : 'bg-gray-700 text-secondary hover:bg-gray-600'
                             }`}
                         >
                             Tous les types ({mandates.length})
@@ -220,7 +220,7 @@ export const MandatsPage: React.FC<MandatsPageProps> = ({ mandates, contacts, on
                                 className={`px-3 py-1 text-xs rounded-full transition-colors ${
                                     typeFilter === type
                                     ? 'bg-indigo-500 text-white'
-                                    : 'bg-surface text-secondary hover:bg-surface-secondary border border-border'
+                                    : 'bg-surface text-secondary hover:bg-gray-800 border border-gray-600'
                                 }`}
                             >
                                 {type} ({typeCounts[type as MandateType] || 0})
@@ -231,7 +231,7 @@ export const MandatsPage: React.FC<MandatsPageProps> = ({ mandates, contacts, on
             </div>
             <div className="overflow-x-auto">
             <table className="w-full text-sm text-left text-secondary">
-                <thead className="text-xs text-primary uppercase bg-surface-secondary">
+                <thead className="text-xs text-primary uppercase bg-gray-700">
                 <tr>
                     <th className="px-6 py-3">Bien / Adresse</th>
                     <th className="px-6 py-3">Vendeur</th>
@@ -246,7 +246,7 @@ export const MandatsPage: React.FC<MandatsPageProps> = ({ mandates, contacts, on
                 <tbody>
                 {filteredMandates.length > 0 ? (
                     filteredMandates.map(mandate => (
-                    <tr key={mandate.id} className="bg-surface border-b border-border hover:bg-surface-secondary">
+                    <tr key={mandate.id} className="bg-surface border-b border-gray-700 hover:bg-gray-800">
                         <td className="px-6 py-4 font-medium text-primary whitespace-nowrap">{mandate.propertyAddress}</td>
                         <td className="px-6 py-4">
                             <button onClick={() => {
@@ -266,13 +266,13 @@ export const MandatsPage: React.FC<MandatsPageProps> = ({ mandates, contacts, on
                         <td className="px-6 py-4 font-lato font-bold text-primary">{calculateAndFormatFee(mandate)}</td>
                         <td className="px-6 py-4">{new Date(mandate.endDate).toLocaleDateString('fr-FR')}</td>
                         <td className="px-6 py-4 text-center">
-                        <button onClick={() => handleOpenDocViewer(mandate)} className="p-2 hover:bg-surface-secondary rounded-full" title="Générer le document">
+                        <button onClick={() => handleOpenDocViewer(mandate)} className="p-2 hover:bg-gray-700 rounded-full" title="Générer le document">
                             <PrinterIcon className="w-5 h-5"/>
                         </button>
-                        <button onClick={() => handleEdit(mandate)} className="p-2 hover:bg-surface-secondary rounded-full" title="Modifier">
+                        <button onClick={() => handleEdit(mandate)} className="p-2 hover:bg-gray-700 rounded-full" title="Modifier">
                             <PencilIcon className="w-5 h-5"/>
                         </button>
-                        <button onClick={() => onDeleteMandate(mandate.id)} className="p-2 hover:bg-surface-secondary rounded-full text-red-500" title="Supprimer">
+                        <button onClick={() => onDeleteMandate(mandate.id)} className="p-2 hover:bg-gray-700 rounded-full text-red-500" title="Supprimer">
                             <TrashIcon className="w-5 h-5"/>
                         </button>
                         </td>
@@ -299,7 +299,7 @@ export const MandatsPage: React.FC<MandatsPageProps> = ({ mandates, contacts, on
                 <select
                     value={generatorMandateId}
                     onChange={(e) => setGeneratorMandateId(e.target.value)}
-                    className="flex-grow bg-input border-border rounded-md p-2"
+                    className="flex-grow bg-gray-900 border-gray-700 rounded-md p-2"
                 >
                     <option value="">-- Sélectionnez un mandat --</option>
                     {mandates.map(m => (
@@ -325,7 +325,7 @@ export const MandatsPage: React.FC<MandatsPageProps> = ({ mandates, contacts, on
                     agentInfo={agentInfo} 
                 />
             ) : (
-                <div className="text-center py-12 text-secondary border-2 border-dashed border-border rounded-lg">
+                <div className="text-center py-12 text-secondary border-2 border-dashed border-gray-700 rounded-lg">
                     <p>Veuillez sélectionner un mandat pour afficher le document.</p>
                 </div>
             )}

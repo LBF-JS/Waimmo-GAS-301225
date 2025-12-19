@@ -271,7 +271,7 @@ export const EstimationPage: React.FC<EstimationPageProps> = ({ contacts, onSave
                                     className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                                         formData.selectedFeatures.includes(feature)
                                             ? 'bg-brand text-white border-brand'
-                                            : 'bg-surface text-secondary border-border hover:border-brand-light'
+                                            : 'bg-gray-800 text-secondary border-gray-700 hover:border-brand-light'
                                     }`}
                                 >
                                     {feature}
@@ -324,16 +324,16 @@ export const EstimationPage: React.FC<EstimationPageProps> = ({ contacts, onSave
                             <p className="text-secondary text-sm print-text-black mb-4">Pour le bien situé au : {formData.address}</p>
                             
                             {estimationResult.summary && (
-                                <div className="mb-6 bg-surface-secondary print-bg-white border border-border p-4 rounded-lg">
+                                <div className="mb-6 bg-gray-800/50 print-bg-white border border-gray-700 p-4 rounded-lg">
                                     <h4 className="font-bold text-primary print-text-black mb-2">Points Clés de l'Estimation</h4>
                                     <div 
-                                        className="prose prose-sm dark:prose-invert max-w-none text-secondary print-text-black prose-p:my-1 prose-ul:my-1 prose-li:my-0" 
+                                        className="prose prose-sm prose-invert max-w-none text-secondary print-text-black prose-p:my-1 prose-ul:my-1 prose-li:my-0" 
                                         dangerouslySetInnerHTML={{ __html: estimationResult.summary.replace(/- /g, '<ul><li>').replace(/\n/g, '</li></ul><ul><li>') + '</li></ul>' }} 
                                     />
                                 </div>
                             )}
 
-                            <div className="my-6 bg-surface-secondary print-bg-white p-6 rounded-lg space-y-4">
+                            <div className="my-6 bg-gray-800 print-bg-white p-6 rounded-lg space-y-4">
                                 <div className="grid grid-cols-3 gap-4 text-center">
                                     <div>
                                         <p className="text-secondary uppercase tracking-wider text-xs print-text-black">Prix Bas</p>
@@ -341,7 +341,7 @@ export const EstimationPage: React.FC<EstimationPageProps> = ({ contacts, onSave
                                             {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(estimationResult.priceLow)}
                                         </p>
                                     </div>
-                                    <div className="border-x border-border">
+                                    <div className="border-x border-gray-700">
                                         <p className="text-secondary uppercase tracking-wider text-xs print-text-black">Prix Médian</p>
                                         <p className="text-3xl font-bold text-brand-light print-text-black font-lato">
                                             {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(estimationResult.priceMedian)}
@@ -354,7 +354,7 @@ export const EstimationPage: React.FC<EstimationPageProps> = ({ contacts, onSave
                                         </p>
                                     </div>
                                 </div>
-                                <div className="text-center pt-4 border-t border-border">
+                                <div className="text-center pt-4 border-t border-gray-700">
                                     <p className="font-semibold text-primary print-text-black font-lato">
                                         ~ {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(estimationResult.pricePerSqm)} / m²
                                     </p>
@@ -383,14 +383,14 @@ export const EstimationPage: React.FC<EstimationPageProps> = ({ contacts, onSave
 const InputField = (props: React.ComponentProps<'input'> & { label: string }) => (
   <div>
     <label htmlFor={props.name} className="block text-sm font-medium text-secondary">{props.label}</label>
-    <input id={props.name} {...props} className="mt-1 block w-full bg-input border-border rounded-md shadow-sm p-2" />
+    <input id={props.name} {...props} className="mt-1 block w-full bg-gray-900 border-gray-700 rounded-md shadow-sm p-2" />
   </div>
 );
   
 const SelectField = (props: React.ComponentProps<'select'> & { label: string, options?: string[] }) => (
     <div>
         <label htmlFor={props.name} className="block text-sm font-medium text-secondary">{props.label}</label>
-        <select id={props.name} {...props} className="mt-1 block w-full bg-input border-border rounded-md shadow-sm p-2">
+        <select id={props.name} {...props} className="mt-1 block w-full bg-gray-900 border-gray-700 rounded-md shadow-sm p-2">
             {props.options ? props.options.map(opt => <option key={opt} value={opt}>{opt}</option>) : props.children}
         </select>
     </div>
@@ -399,6 +399,6 @@ const SelectField = (props: React.ComponentProps<'select'> & { label: string, op
 const TextareaField = (props: React.ComponentProps<'textarea'> & { label: string }) => (
     <div>
         <label htmlFor={props.name} className="block text-sm font-medium text-secondary">{props.label}</label>
-        <textarea id={props.name} {...props} rows={2} className="mt-1 block w-full bg-input border-border rounded-md shadow-sm p-2" />
+        <textarea id={props.name} {...props} rows={2} className="mt-1 block w-full bg-gray-900 border-gray-700 rounded-md shadow-sm p-2" />
     </div>
 );

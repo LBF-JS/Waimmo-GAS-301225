@@ -6,15 +6,14 @@ import {
     Contact, Appointment, VisitReport, SavedAnnonce, Notification, AgentInfo, NotificationSettings, 
     Civility, FunnelStage, ProjectStatus, ContactType, ContactPreference, PropertyType, TransactionType, 
     ProjectPriority, FinancingStatus, ContactSource, Remark, NotificationType,
-    AppointmentStatus, VisitReportStatus, Estimation, Mandate,
-    Criterion, Columns, PigeResult
+    AppointmentStatus, VisitReportStatus, Estimation, Mandate
 } from './types';
 
 // Import Pages
 import { HomePage } from './pages/HomePage';
 import { Dashboard } from './pages/Dashboard';
 import { Search } from './pages/Search';
-import { PigePage, INITIAL_CRITERIA } from './pages/PigePage';
+import { PigePage } from './pages/PigePage';
 import { CalendarPage } from './pages/CalendarPage';
 import { ReportPage } from './pages/ReportPage';
 import { ImageEditorPage } from './pages/ImageEditorPage';
@@ -22,10 +21,10 @@ import { MesAnnoncesPage } from './pages/MesAnnoncesPage';
 import { History } from './pages/History';
 import { SettingsPage } from './pages/SettingsPage';
 import { EstimationPage } from './pages/EstimationPage';
-import { SavedListingsPage } from './pages/SavedListingsPage';
-import { LoginPage } from './pages/LoginPage';
 import { MandatsPage } from './pages/MandatsPage';
 import { MandateTrackingPage } from './pages/MandateTrackingPage';
+import { SavedListingsPage } from './pages/SavedListingsPage';
+import { LoginPage } from './pages/LoginPage';
 
 
 // Import Components
@@ -39,8 +38,8 @@ import { NotificationsPanel } from './components/NotificationsPanel';
 import { 
     HomeIcon, UserGroupIcon, MagnifyingGlassIcon, CalendarDaysIcon, 
     DocumentChartBarIcon, Cog6ToothIcon, BellIcon,
-    PhotoIcon, BookmarkSquareIcon, DocumentTextIcon, PhoneArrowUpRightIcon, CalculatorIcon,
-    ArrowRightOnRectangleIcon, WaImmoLogoIcon, DocumentCheckIcon, Squares2X2Icon
+    PhotoIcon, BookmarkSquareIcon, DocumentTextIcon, PhoneArrowUpRightIcon, CalculatorIcon, DocumentCheckIcon,
+    ArrowRightOnRectangleIcon, WaImmoLogoIcon
 } from './components/Icons';
 
 // --- MOCK DATA ---
@@ -49,7 +48,7 @@ import { initialAgentInfo, initialContacts, initialAppointments, initialReports,
 // --- TYPES ---
 type Page = 
     'home' | 'dashboard' | 'search' | 'pige' | 'calendar' | 'reports' | 'estimation' |
-    'image-editor' | 'mes-annonces' | 'saved-listings' | 'history' | 'settings' | 'mandats' | 'mandate-tracking';
+    'image-editor' | 'mes-annonces' | 'saved-listings' | 'history' | 'settings' | 'mandats' | 'suivi-mandats';
     
 type Theme = 'light' | 'dark';
 
@@ -67,7 +66,7 @@ const pageTitles: Record<Page, string> = {
     history: "Historique des Dossiers",
     settings: "Paramètres",
     mandats: "Gestion des Mandats",
-    "mandate-tracking": "Suivi des Mandats"
+    'suivi-mandats': "Suivi des Mandats",
 };
 
 // --- MAIN APP COMPONENT ---
@@ -118,28 +117,7 @@ const App = () => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [agentInfo, setAgentInfo] = useState<AgentInfo>(initialAgentInfo);
     const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(initialNotificationSettings);
-    const [n8nWebhookUrl, setN8nWebhookUrl] = useState<string>(() => {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('n8nWebhookUrl') || '';
-        }
-        return '';
-    });
-    
-    // Pige Page State
-    const [pigeState, setPigeState] = useState({
-        searchType: 'listings' as 'listings' | 'agencies',
-        location: 'Toulouse, France',
-        radius: 5,
-        availableCriteria: INITIAL_CRITERIA,
-        columns: { essentials: [] as Criterion[], importants: [] as Criterion[], secondaries: [] as Criterion[] } as Columns,
-        freeTextInput: '',
-        isLoading: false,
-        error: null as string | null,
-        results: [] as PigeResult[],
-        coordinates: null as { latitude: number; longitude: number; } | null,
-        selectedContactId: '',
-        selectedResultIds: [] as string[],
-    });
+    const [n8nWebhookUrl, setN8nWebhookUrl] = useState<string>('');
 
     useEffect(() => {
         // Hydrate state from mock data on initial load
@@ -339,7 +317,6 @@ const App = () => {
         setNotificationSettings(newSettings);
     };
     const handleUpdateN8nWebhookUrl = (url: string) => {
-        localStorage.setItem('n8nWebhookUrl', url);
         setN8nWebhookUrl(url);
         if (url) {
             addNotification("L'URL du webhook n8n a été enregistrée.", NotificationType.AGENT_INFO_UPDATE);
@@ -372,17 +349,17 @@ const App = () => {
             case 'home': return <HomePage contacts={contacts} appointments={appointments} onSelectContact={handleSelectContact} />;
             case 'dashboard': return <Dashboard contacts={contacts} appointments={appointments} onSelectContact={handleSelectContact} onUpdateFunnelStage={handleUpdateFunnelStage} />;
             case 'search': return <Search />;
-            case 'pige': return <PigePage contacts={contacts} onUpdateContact={handleUpdateContact} n8nWebhookUrl={n8nWebhookUrl} pigeState={pigeState} setPigeState={setPigeState} />;
+            case 'pige': return <PigePage contacts={contacts} onUpdateContact={handleUpdateContact} />;
             case 'calendar': return <CalendarPage appointments={appointments} contacts={contacts} savedAnnonces={savedAnnonces} onAddAppointment={handleAddAppointment} onUpdateAppointment={handleUpdateAppointment} onDeleteAppointment={handleDeleteAppointment} onSelectContact={handleSelectContact} />;
             case 'reports': return <ReportPage reports={reports} contacts={contacts} onDeleteReport={handleDeleteReport} onSelectContact={handleSelectContact} onOpenNewReportModal={handleOpenNewReportModal} onOpenEditReportModal={handleOpenEditReportModal} />;
             case 'estimation': return <EstimationPage contacts={contacts} onSaveEstimation={handleSaveEstimation} />;
+            case 'mandats': return <MandatsPage mandates={mandates} contacts={contacts} onAddMandate={handleAddMandate} onUpdateMandate={handleUpdateMandate} onDeleteMandate={handleDeleteMandate} onSelectContact={handleSelectContact} onUpdateContact={handleUpdateContact} agentInfo={agentInfo} />;
+            case 'suivi-mandats': return <MandateTrackingPage mandates={mandates} contacts={contacts} />;
             case 'image-editor': return <ImageEditorPage onSaveAnnonce={handleSaveAnnonce} annonceToEdit={annonceToEdit} onUpdateAnnonce={handleUpdateAnnonce} setActivePage={setActivePage} />;
             case 'mes-annonces': return <MesAnnoncesPage annonces={savedAnnonces} onDelete={handleDeleteAnnonce} onEdit={handleEditAnnonce} />;
             case 'saved-listings': return <SavedListingsPage contacts={contacts} onUpdateContact={handleUpdateContact} onSelectContact={handleSelectContact} />;
             case 'history': return <History contacts={contacts.filter(c => c.projectStatus === ProjectStatus.Termine || c.projectStatus === ProjectStatus.Perdu)} onSelectContact={handleSelectContact} />;
             case 'settings': return <SettingsPage agentInfo={agentInfo} onUpdateAgentInfo={handleUpdateAgentInfo} notificationSettings={notificationSettings} onUpdateNotificationSettings={handleUpdateNotificationSettings} theme={theme} setTheme={setTheme} n8nWebhookUrl={n8nWebhookUrl} onUpdateN8nWebhookUrl={handleUpdateN8nWebhookUrl} />;
-            case 'mandats': return <MandatsPage mandates={mandates} contacts={contacts} onAddMandate={handleAddMandate} onUpdateMandate={handleUpdateMandate} onDeleteMandate={handleDeleteMandate} onSelectContact={handleSelectContact} onUpdateContact={handleUpdateContact} agentInfo={agentInfo}/>;
-            case 'mandate-tracking': return <MandateTrackingPage mandates={mandates} contacts={contacts} />;
             default: return <HomePage contacts={contacts} appointments={appointments} onSelectContact={handleSelectContact} />;
         }
     };
@@ -454,6 +431,7 @@ const App = () => {
 const NavItem: React.FC<{ icon: React.ReactNode, label: string, page: Page, activePage: Page, setActivePage: (page: Page) => void }> = 
 ({ icon, label, page, activePage, setActivePage }) => (
     <button onClick={() => setActivePage(page)} className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg w-full text-left transition-colors ${activePage === page ? 'bg-brand text-white' : 'hover:bg-surface-secondary'}`}>
+        <span className="w-6 h-6">{icon}</span>
         <span>{label}</span>
     </button>
 );
@@ -475,8 +453,6 @@ const Sidebar: React.FC<{ activePage: Page, setActivePage: (page: Page) => void,
             
             <div className="pt-4 mt-4 border-t border-border">
                 <p className="px-3 text-xs font-semibold text-secondary uppercase mb-2">Annonces</p>
-                <NavItem icon={<PhotoIcon />} label="Assistant Créatif" page="image-editor" activePage={activePage} setActivePage={setActivePage} />
-                <NavItem icon={<BookmarkSquareIcon />} label="Mes Annonces" page="mes-annonces" activePage={activePage} setActivePage={setActivePage} />
                 <NavItem icon={<BookmarkSquareIcon />} label="Annonces Enregistrées" page="saved-listings" activePage={activePage} setActivePage={setActivePage} />
             </div>
 
@@ -496,5 +472,3 @@ const Sidebar: React.FC<{ activePage: Page, setActivePage: (page: Page) => void,
 );
 
 export default App;
-
-    
